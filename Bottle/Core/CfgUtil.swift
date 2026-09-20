@@ -118,7 +118,7 @@ final class CfgUtil {
         return result
     }
 
-    private static func redacted(_ argv: [String]) -> [String] {
+    nonisolated private static func redacted(_ argv: [String]) -> [String] {
         var out = argv
         for (index, arg) in argv.enumerated() where arg == "--password" && index + 1 < argv.count {
             out[index + 1] = "••••••"
@@ -126,7 +126,7 @@ final class CfgUtil {
         return out
     }
 
-    private static func parse(command: String, output: ProcessRunner.Output) throws -> CfgUtilResult {
+    nonisolated static func parse(command: String, output: ProcessRunner.Output) throws -> CfgUtilResult {
         let lines = output.stdout.split(whereSeparator: \.isNewline).map(String.init)
 
         // The final result is the last JSON object on stdout; --progress lines come before it.

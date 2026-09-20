@@ -20,6 +20,19 @@ activity log (⌘⇧L) and include its output in bug reports — it shows the ex
 
 The supervision wizard erases the phone. Test it on a device you can wipe.
 
+## Tests
+
+`BottleTests` covers the pure parsing layer — cfgutil JSON, `.mobileconfig`
+payloads, keychain labels — using output captured from real devices. Run them
+with ⌘U in Xcode or:
+
+```sh
+xcodebuild -project Bottle.xcodeproj -scheme Bottle -destination 'platform=macOS' test
+```
+
+When a phone or a new cfgutil version produces output the app mis-parses,
+paste the raw JSON from the activity log into a test first.
+
 ## Pull requests
 
 - Keep `swift build`-style warnings at zero; CI builds every PR.

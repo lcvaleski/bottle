@@ -58,3 +58,32 @@ targets:
       configs:
         Release:
           OTHER_CODE_SIGN_FLAGS: "--timestamp"
+
+  BottleTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - BottleTests
+    dependencies:
+      - target: Bottle
+    settings:
+      base:
+        SWIFT_VERSION: "5.0"
+        PRODUCT_BUNDLE_IDENTIFIER: com.coventrylabs.bottle.tests
+        CODE_SIGN_IDENTITY: "-"
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  Bottle:
+    build:
+      targets:
+        Bottle: all
+        BottleTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - BottleTests
+    archive:
+      config: Release

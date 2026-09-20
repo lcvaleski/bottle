@@ -109,7 +109,7 @@ final class SupervisionIdentityStore {
         }
     }
 
-    private static func organization(fromLabel label: String) -> String {
+    nonisolated static func organization(fromLabel label: String) -> String {
         var name = label
         if name.hasPrefix("Apple Configurator:") {
             name = String(name.dropFirst("Apple Configurator:".count))

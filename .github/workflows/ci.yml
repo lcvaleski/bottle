@@ -15,6 +15,12 @@ jobs:
           xcode-version: latest-stable
       - name: Install xcodegen
         run: brew install xcodegen
+      - name: Unit tests
+        run: |
+          xcodegen generate --quiet
+          xcodebuild -project Bottle.xcodeproj -scheme Bottle -destination 'platform=macOS' \
+            -derivedDataPath build/test CODE_SIGN_IDENTITY=- test 2>&1 | grep -E "error:|Test run|TEST" || true
+          grep -q "TEST SUCCEEDED" <(xcodebuild -project Bottle.xcodeproj -scheme Bottle -destination 'platform=macOS' -derivedDataPath build/test CODE_SIGN_IDENTITY=- test 2>&1)
       - name: Build ad-hoc DMG
         run: scripts/release.sh "0.0.0-ci" "${{ github.run_number }}"
       - uses: actions/upload-artifact@v4
