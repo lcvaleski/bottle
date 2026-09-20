@@ -8,10 +8,16 @@ struct RestrictionsProfileTests {
         let root = try #require(PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any])
         #expect(root["PayloadIdentifier"] as? String == RestrictionsProfile.identifier)
         #expect(root["PayloadOrganization"] as? String == "Test Org")
-        #expect(root["PayloadRemovalDisallowed"] as? Bool == false)
+        #expect(root["PayloadRemovalDisallowed"] as? Bool == true, "locked on the phone by default")
         let content = try #require(root["PayloadContent"] as? [[String: Any]])
         #expect(content.count == 1)
         return content[0]
+    }
+
+    @Test func unlockedProfileIsRemovable() throws {
+        let data = try RestrictionsProfile.data(mode: .block, bundleIDs: [], organizationName: "x", lockedOnPhone: false)
+        let root = try #require(PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any])
+        #expect(root["PayloadRemovalDisallowed"] as? Bool == false)
     }
 
     @Test func blockModeUsesBlockedKey() throws {

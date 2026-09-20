@@ -18,6 +18,10 @@ final class AppRestrictionsModel {
     var selected: Set<String> = [] {
         didSet { persistSelection() }
     }
+    /// Whether the profile can be removed from the iPhone's own Settings. Off = only this Mac can.
+    var lockedOnPhone = true {
+        didSet { persistSelection() }
+    }
     var search = ""
 
     private(set) var apps: [InstalledApp] = []
@@ -112,7 +116,7 @@ final class AppRestrictionsModel {
 
         do {
             let org = identityStore.identity?.organizationName ?? "Bottle"
-            let data = try RestrictionsProfile.data(mode: mode, bundleIDs: Array(selected), organizationName: org)
+            let data = try RestrictionsProfile.data(mode: mode, bundleIDs: Array(selected), organizationName: org, lockedOnPhone: lockedOnPhone)
             let url = FileManager.default.temporaryDirectory
                 .appendingPathComponent("bottle-app-restrictions-\(UUID().uuidString).mobileconfig")
             try data.write(to: url)
@@ -129,7 +133,8 @@ final class AppRestrictionsModel {
                 displayName: "Bottle App Restrictions",
                 restrictions: AppRestrictions(mode: mode, bundleIDs: Array(selected))
             ))
-            statusMessage = "Applied to iPhone — \(selected.count) app\(selected.count == 1 ? "" : "s") \(mode == .block ? "blocked" : "allowed")."
+            statusMessage = "Applied — \(selected.count) app\(selected.count == 1 ? "" : "s") \(mode == .block ? "blocked" : "allowed")"
+                + (lockedOnPhone ? ". Removable only from this Mac." : ". Removable from the iPhone's Settings.")
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -216,7 +221,7 @@ final class AppRestrictionsModel {
 
     private func persistSelection() {
         UserDefaults.standard.set(
-            ["mode": mode.rawValue, "selected": Array(selected)] as [String: Any],
+            ["mode": mode.rawValue, "selected": Array(selected), "locked": lockedOnPhone] as [String: Any],
             forKey: storageKey
         )
     }
@@ -228,6 +233,9 @@ final class AppRestrictionsModel {
         }
         if let ids = saved["selected"] as? [String] {
             selected = Set(ids)
+        }
+        if let locked = saved["locked"] as? Bool {
+            lockedOnPhone = locked
         }
     }
 }

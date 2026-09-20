@@ -28,7 +28,10 @@ enum RestrictionsProfile {
     /// Identifiers earlier builds used. Treated as Bottle's own and replaced on the next Apply.
     static let legacyIdentifiers: Set<String> = ["com.bottle.app-restrictions"]
 
-    static func data(mode: RestrictionMode, bundleIDs: [String], organizationName: String) throws -> Data {
+    /// - Parameter lockedOnPhone: When true (the default), iOS refuses to remove the profile
+    ///   from Settings → VPN & Device Management; only the supervising Mac can remove it.
+    ///   Supervised devices honour this; unsupervised ones ignore it.
+    static func data(mode: RestrictionMode, bundleIDs: [String], organizationName: String, lockedOnPhone: Bool = true) throws -> Data {
         let key = mode == .block ? "blockedAppBundleIDs" : "allowListedAppBundleIDs"
         let payload: [String: Any] = [
             "PayloadType": "com.apple.applicationaccess",
@@ -46,7 +49,7 @@ enum RestrictionsProfile {
             "PayloadDisplayName": "Bottle App Restrictions",
             "PayloadDescription": "Installed by Bottle to \(mode == .block ? "block" : "allow") selected apps.",
             "PayloadOrganization": organizationName,
-            "PayloadRemovalDisallowed": false,
+            "PayloadRemovalDisallowed": lockedOnPhone,
             "PayloadContent": [payload],
         ]
         return try PropertyListSerialization.data(fromPropertyList: root, format: .xml, options: 0)

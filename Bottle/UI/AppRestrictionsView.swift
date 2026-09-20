@@ -64,6 +64,17 @@ struct AppRestrictionsView: View {
                     Badge(text: "Restrictions active", color: .blue)
                 }
             }
+            Toggle(isOn: $model.lockedOnPhone) {
+                HStack(spacing: 6) {
+                    Image(systemName: model.lockedOnPhone ? "lock.fill" : "lock.open")
+                    Text(model.lockedOnPhone
+                         ? "Locked — can only be removed from this Mac"
+                         : "Unlocked — can be removed from the iPhone's Settings")
+                }
+                .font(.callout)
+            }
+            .toggleStyle(.switch)
+            .controlSize(.small)
         }
         .padding(16)
     }
