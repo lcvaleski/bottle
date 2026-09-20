@@ -18,9 +18,10 @@ jobs:
       - name: Unit tests
         run: |
           xcodegen generate --quiet
+          set -o pipefail
           xcodebuild -project Bottle.xcodeproj -scheme Bottle -destination 'platform=macOS' \
-            -derivedDataPath build/test CODE_SIGN_IDENTITY=- test 2>&1 | grep -E "error:|Test run|TEST" || true
-          grep -q "TEST SUCCEEDED" <(xcodebuild -project Bottle.xcodeproj -scheme Bottle -destination 'platform=macOS' -derivedDataPath build/test CODE_SIGN_IDENTITY=- test 2>&1)
+            -derivedDataPath build/test CODE_SIGN_IDENTITY=- test 2>&1 | tee build/test.log | grep -E "error:|Test run|TEST" || true
+          grep -q "TEST SUCCEEDED" build/test.log
       - name: Build ad-hoc DMG
         run: scripts/release.sh "0.0.0-ci" "${{ github.run_number }}"
       - uses: actions/upload-artifact@v4
