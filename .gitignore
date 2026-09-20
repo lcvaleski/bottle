@@ -1,0 +1,8 @@
+# xcodegen output — run `xcodegen generate` to recreate
+Bottle.xcodeproj/
+build/
+DerivedData/
+.DS_Store
+*.xcuserstate
+xcuserdata/
+dist/

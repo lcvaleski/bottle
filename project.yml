@@ -1,0 +1,60 @@
+name: Bottle
+options:
+  bundleIdPrefix: com.coventrylabs
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.7.0"
+
+targets:
+  Bottle:
+    type: application
+    platform: macOS
+    sources:
+      - Bottle
+    dependencies:
+      - package: Sparkle
+    info:
+      path: Bottle/Info.plist
+      properties:
+        CFBundleDisplayName: Bottle
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSApplicationCategoryType: public.app-category.utilities
+        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+        NSHumanReadableCopyright: "© 2026 Coventry Labs, LLC. MIT licensed."
+        # Sparkle: both values are injected by CI (see scripts/release.sh). Local builds get
+        # placeholders and Sparkle simply reports that updates aren't configured.
+        SUFeedURL: $(SPARKLE_FEED_URL)
+        SUPublicEDKey: $(SPARKLE_PUBLIC_ED_KEY)
+        SUEnableInstallerLauncherService: false
+    entitlements:
+      path: Bottle/Bottle.entitlements
+      properties:
+        # Sandbox stays off: the app must spawn cfgutil/openssl and read ~/Library/Application Support/MobileSync.
+        com.apple.security.app-sandbox: false
+    settings:
+      base:
+        SWIFT_VERSION: "5.0"
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        PRODUCT_BUNDLE_IDENTIFIER: com.coventrylabs.bottle
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_HARDENED_RUNTIME: YES
+        GENERATE_INFOPLIST_FILE: NO
+        SWIFT_STRICT_CONCURRENCY: minimal
+        SPARKLE_FEED_URL: "https://example.invalid/appcast.xml"
+        SPARKLE_PUBLIC_ED_KEY: ""
+        # Local/dev builds are ad-hoc signed. scripts/release.sh overrides these with Developer ID.
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "-"
+        OTHER_CODE_SIGN_FLAGS: "--timestamp=none"
+      configs:
+        Release:
+          OTHER_CODE_SIGN_FLAGS: "--timestamp"
