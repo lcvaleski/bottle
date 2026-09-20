@@ -18,6 +18,7 @@ jobs:
       - name: Unit tests
         run: |
           xcodegen generate --quiet
+          mkdir -p build
           set -o pipefail
           xcodebuild -project Bottle.xcodeproj -scheme Bottle -destination 'platform=macOS' \
             -derivedDataPath build/test CODE_SIGN_IDENTITY=- test 2>&1 | tee build/test.log | grep -E "error:|Test run|TEST" || true
