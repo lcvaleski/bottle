@@ -98,8 +98,20 @@ struct SupervisionIntroView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            Text("This iPhone isn't supervised yet")
-                .font(.title3.weight(.semibold))
+            HStack(spacing: 8) {
+                Text("This iPhone isn't supervised yet")
+                    .font(.title3.weight(.semibold))
+                Badge(text: "Experimental", color: .orange)
+            }
+
+            Label {
+                Text("The supervision wizard hasn't been tested on enough phones yet. If it fails partway, Apple Configurator can finish the job — the phone is never left in a state Configurator can't recover. Keep the activity log (⌘⇧L) open and report what happened.")
+            } icon: {
+                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+            }
+            .font(.callout)
+            .padding(12)
+            .background(.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
 
             Text("Supervision lets Bottle hide or allow-list apps on the phone. Apple only permits it on a freshly erased device, so Bottle will:")
 

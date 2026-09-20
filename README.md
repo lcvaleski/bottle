@@ -139,7 +139,7 @@ Restriction selections are remembered per phone in `UserDefaults`
 - `configurationProfiles` keys: `identifier`, `displayName`, `version`
 - Keychain identity import → `install-profile` with `-C/-K` hides the app immediately
 
-## Not yet verified (needs an unsupervised phone)
+## Not yet verified (needs an unsupervised phone) — wizard is marked Experimental in the app
 
 - **prepare → restore-backup ordering.** Apple Configurator's own Prepare flow
   supports restoring a backup afterward, and the phone is still at Setup
