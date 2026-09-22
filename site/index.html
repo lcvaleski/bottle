@@ -106,7 +106,10 @@
         .tiers h2 { font-size: 16px; font-weight: bold; margin: 0 0 8px; }
         .tiers h2 + p { margin-top: 0; }
         .tiers p { margin: 0 0 10px; }
-        .tiers .why { color: #333; font-size: 15px; }
+        .tiers details { margin: 0 0 6px; }
+        .tiers summary { cursor: pointer; color: #0000EE; font-size: 14px; width: fit-content; }
+        .tiers summary:hover { text-decoration: underline; }
+        .tiers details p { color: #333; font-size: 15px; margin: 8px 0 0; }
         .diagram { display: block; width: 100%; max-width: 440px; height: auto; margin: 6px 0 14px; color: black; }
         .tiers h2:not(:first-child) { margin-top: 28px; }
         .soon { font-weight: normal; font-size: 12px; color: #666; border: 1px solid rgb(233, 233, 233); padding: 1px 6px; margin-left: 6px; vertical-align: middle; }
@@ -182,9 +185,12 @@
                     <text x="310" y="98" fill="#666">holds the key</text>
                 </g>
             </svg>
-            <p><strong>The app is a switch.</strong> Plug in, check the apps you want gone, click Apply. Want one back? Plug in, uncheck, Apply.</p>
-            <p class="why">Why it holds: the key that lets a computer manage your phone (the supervision identity) lives on your Mac. The phone's own Settings has no remove button for the profile. So the only way to unblock is the walk back to your laptop and the cable.</p>
-            <p class="why">Works forever, no account, no server. If we vanish, nothing changes.</p>
+            <p><strong>A switch.</strong> Plug in, pick apps, Apply. To unblock: plug in again.</p>
+            <details>
+                <summary>Why it holds</summary>
+                <p>The key that lets a computer manage your phone lives on your Mac. The phone's own Settings has no remove button. So unblocking means the walk back to your laptop and the cable.</p>
+                <p>No account, no server. If we vanish, nothing changes.</p>
+            </details>
 
             <h2>Paid <span class="soon">coming</span></h2>
             <svg class="diagram" viewBox="0 0 440 150" role="img" aria-label="Your iPhone with a password lock; your Mac with the key removed; our server holding the key behind a timer">
@@ -228,9 +234,12 @@
                     <text x="212" y="145" fill="#666">the password, after the delay you chose</text>
                 </g>
             </svg>
-            <p><strong>The app hands over the keys.</strong> When you click Lock, the profile is reinstalled with a password you never see, and the supervision key is uploaded to our server and deleted from your Mac.</p>
-            <p class="why">Why it holds: with the key gone, plugging into your Mac does nothing — a supervised phone only obeys the computer that holds its key. And iOS will only remove a password-protected profile if you type the password. We hold it, and we release it only after the delay you picked, or when the person you chose approves. Then you type it into Settings on the phone. No Mac needed.</p>
-            <p class="why">The one door that always works is erasing the phone. That's Apple's rule, not ours, and it's the reason this is safe: nothing here can brick a phone.</p>
+            <p><strong>A lock.</strong> Click Lock and the key leaves your Mac. To unblock: wait out the delay you chose, or ask the person you chose.</p>
+            <details>
+                <summary>Why it holds</summary>
+                <p>The profile is reinstalled with a password you never see, and the key is moved from your Mac to our server. With the key gone, plugging in does nothing — a supervised phone only obeys the computer that holds its key. iOS removes a password-protected profile only when you type the password, and we release it only after the delay, or when your person approves. Then you type it into Settings on the phone. No Mac needed.</p>
+                <p>The one door that always works is erasing the phone. That's Apple's rule, and it's why nothing here can brick a phone.</p>
+            </details>
         </section>
     </main>
 
