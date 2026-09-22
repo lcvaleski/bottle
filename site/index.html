@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bottle — supervise your iPhone from your Mac</title>
+    <meta name="description" content="Bottle is a free, open-source Mac app that supervises your iPhone and lets you choose which apps it can run. No accounts, no server, no subscription.">
+    <meta property="og:title" content="Bottle">
+    <meta property="og:description" content="Supervise your iPhone from your Mac. Choose which apps it can run.">
+    <meta property="og:url" content="https://corephone.org/">
+    <link rel="canonical" href="https://corephone.org/">
+    <meta property="og:image" content="https://corephone.org/icon.png">
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Nothing+You+Could+Do&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #CC9822;
+            --ink: #1B1A19;
+        }
+        * { box-sizing: border-box; }
+        html, body { margin: 0; }
+        body {
+            background: var(--gold);
+            color: var(--ink);
+            font-family: "EB Garamond", Garamond, "Times New Roman", serif;
+            font-size: 1.25rem;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        a { color: var(--ink); text-decoration: none; }
+        a:hover { text-decoration: underline; text-underline-offset: 0.15em; }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 6rem 1.5rem 4rem;
+        }
+
+        .wordmark {
+            font-family: "Nothing You Could Do", "Segoe Script", cursive;
+            font-size: clamp(5rem, 16vw, 9rem);
+            line-height: 1;
+            margin: 0 0 0.2em;
+            letter-spacing: -0.02em;
+        }
+        .wordmark sup {
+            font-family: "EB Garamond", serif;
+            font-size: 0.14em;
+            letter-spacing: 0.1em;
+            vertical-align: top;
+            margin-left: 0.3em;
+        }
+
+        .lines { margin: 2.5rem 0 0; }
+        .lines p { margin: 0; }
+        .lines p + p { margin-top: 0.15em; }
+        .lines .quiet { font-style: italic; margin-top: 0.8em; }
+
+        .links {
+            margin: 2rem 0 0;
+            display: flex;
+            gap: 1.75rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .button {
+            display: inline-block;
+            margin-top: 2.5rem;
+            padding: 0.6rem 1.6rem;
+            border: 2px solid var(--ink);
+            font-size: 0.95rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: background-color .2s, color .2s;
+        }
+        .button:hover { background: var(--ink); color: var(--gold); text-decoration: none; }
+        .fineprint { font-size: 0.95rem; margin: 0.9rem 0 0; font-style: italic; }
+
+        section {
+            width: 100%;
+            max-width: 560px;
+            margin-top: 5rem;
+            padding-top: 3rem;
+            border-top: 1px solid rgba(27, 26, 25, 0.25);
+        }
+        section h2 {
+            font-weight: 400;
+            font-size: 1.05rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin: 0 0 1.4rem;
+        }
+        section p { margin: 0 0 1em; }
+        section p:last-child { margin-bottom: 0; }
+        ol {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            counter-reset: step;
+        }
+        ol li {
+            counter-increment: step;
+            margin-bottom: 1.1em;
+        }
+        ol li::before {
+            content: counter(step) ".";
+            display: block;
+            font-style: italic;
+            opacity: 0.7;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2.5rem 1.5rem 3rem;
+            font-size: 1rem;
+        }
+        footer .nav a { margin: 0 0.35rem; }
+        footer .nav span { opacity: 0.5; }
+        footer .legal { margin: 1.5rem 0 0; font-size: 0.85rem; opacity: 0.7; font-style: italic; }
+        footer .home { margin: 1rem 0 0; }
+
+        @media (max-width: 600px) {
+            body { font-size: 1.15rem; }
+            main { padding-top: 4rem; }
+            section { margin-top: 3.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <h1 class="wordmark">Bottle</h1>
+
+        <div class="lines">
+            <p>Supervise your iPhone from your Mac.</p>
+            <p>Choose which apps it can run.</p>
+            <p class="quiet">Free. Open source. No accounts, no server.</p>
+        </div>
+
+        <nav class="links">
+            <a href="#how">How it works</a>
+            <a href="https://github.com/lcvaleski/bottle">Source</a>
+            <a href="https://github.com/lcvaleski/bottle/releases">Releases</a>
+        </nav>
+
+        <a class="button" href="https://github.com/lcvaleski/bottle/releases/latest">Download for Mac</a>
+        <p class="fineprint">macOS 14 or later · requires Apple Configurator</p>
+
+        <section id="how">
+            <h2>How it works</h2>
+            <ol>
+                <li>Plug in your iPhone. Bottle uses the same tool Apple Configurator uses (<code style="font-family: inherit; font-style: italic;">cfgutil</code>) to talk to it over the cable.</li>
+                <li>Supervise it once. Supervision is Apple's own mechanism for letting a trusted Mac manage a phone — the same thing schools and companies use. It requires an erase, so Bottle backs the phone up first and restores it after. If your phone is already supervised with Apple Configurator, Bottle picks that up and skips this.</li>
+                <li>Pick the apps. Block a few, or allow only a few. Bottle installs a standard configuration profile; the apps disappear from the Home Screen and can't be opened. Change your mind any time.</li>
+            </ol>
+        </section>
+
+        <section>
+            <h2>Why</h2>
+            <p>Screen Time asks you to trust yourself with the passcode. Supervision doesn't — the rule lives on the phone and the only way to change it is to plug back into the Mac that set it. It's the closest thing to a dumb phone that's still your phone.</p>
+        </section>
+
+        <section>
+            <h2>Honest limits</h2>
+            <p>Supervising a phone for the first time erases it. Bottle backs it up and restores it, but plan for an hour and make sure Find My is off.</p>
+            <p>Only the Mac holding the supervision key can manage the phone. Back that key up; Bottle tells you where it is.</p>
+            <p>Bottle can't hide Phone, Settings, or Messages. iOS doesn't allow it.</p>
+        </section>
+    </main>
+
+    <footer>
+        <p class="nav">
+            <a href="https://github.com/lcvaleski/bottle">GitHub</a><span>|</span>
+            <a href="https://github.com/lcvaleski/bottle/issues">Issues</a><span>|</span>
+            <a href="https://apps.apple.com/app/id1037126344">Apple Configurator</a><span>|</span>
+            <a href="https://github.com/lcvaleski/bottle/blob/main/LICENSE">MIT License</a>
+        </p>
+        <p class="home"><a href="https://logan.valeski.org">logan.valeski.org</a></p>
+        <p class="legal">Made by Coventry Labs, LLC. Not affiliated with Apple. iPhone, Mac, and Apple Configurator are trademarks of Apple Inc.</p>
+    </footer>
+</body>
+</html>

@@ -3,6 +3,9 @@
 A small macOS app that supervises your own iPhone with Apple Configurator's
 `cfgutil`, then lets you block or allow-list the apps on it.
 
+**Website: [corephone.org](https://corephone.org)** · The site lives in
+[`site/`](site/) and deploys to Vercel on every push to `main`.
+
 ## Why supervision, and why it erases the phone
 
 Hiding or allow-listing apps (`com.apple.applicationaccess` →

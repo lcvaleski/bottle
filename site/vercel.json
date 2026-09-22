@@ -1,0 +1,11 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "redirects": [
+    { "source": "/download", "destination": "https://github.com/lcvaleski/bottle/releases/latest", "permanent": false },
+    { "source": "/github", "destination": "https://github.com/lcvaleski/bottle", "permanent": false }
+  ],
+  "headers": [
+    { "source": "/(.*)", "headers": [ { "key": "X-Content-Type-Options", "value": "nosniff" } ] }
+  ]
+}
