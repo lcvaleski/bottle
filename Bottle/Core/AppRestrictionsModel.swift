@@ -23,6 +23,11 @@ final class AppRestrictionsModel {
         didSet { persistSelection() }
     }
     var search = ""
+    /// Hostnames blocked via the web content filter payload.
+    var sites: [String] = [] {
+        didSet { persistSelection() }
+    }
+    var siteInput = ""
 
     private(set) var apps: [InstalledApp] = []
     private(set) var profiles: [InstalledProfile] = []
@@ -107,6 +112,16 @@ final class AppRestrictionsModel {
         Task { await iconCache.ensureIcons(for: ids, ecid: ecid, deviceKey: deviceKey) }
     }
 
+    func addSite() {
+        guard let host = RestrictionsProfile.normalizeSite(siteInput) else { return }
+        if !sites.contains(host) { sites.append(host) }
+        siteInput = ""
+    }
+
+    func removeSite(_ host: String) {
+        sites.removeAll { $0 == host }
+    }
+
     func apply() async {
         guard !isApplying else { return }
         isApplying = true
@@ -116,7 +131,7 @@ final class AppRestrictionsModel {
 
         do {
             let org = identityStore.identity?.organizationName ?? "Bottle"
-            let data = try RestrictionsProfile.data(mode: mode, bundleIDs: Array(selected), organizationName: org, lockedOnPhone: lockedOnPhone)
+            let data = try RestrictionsProfile.data(mode: mode, bundleIDs: Array(selected), sites: sites, organizationName: org, lockedOnPhone: lockedOnPhone)
             let url = FileManager.default.temporaryDirectory
                 .appendingPathComponent("bottle-app-restrictions-\(UUID().uuidString).mobileconfig")
             try data.write(to: url)
@@ -134,6 +149,7 @@ final class AppRestrictionsModel {
                 restrictions: AppRestrictions(mode: mode, bundleIDs: Array(selected))
             ))
             statusMessage = "Applied — \(selected.count) app\(selected.count == 1 ? "" : "s") \(mode == .block ? "blocked" : "allowed")"
+                + (sites.isEmpty ? "" : ", \(sites.count) site\(sites.count == 1 ? "" : "s") blocked")
                 + (lockedOnPhone ? ". Removable only from this Mac." : ". Removable from the iPhone's Settings.")
         } catch {
             errorMessage = error.localizedDescription
@@ -221,7 +237,7 @@ final class AppRestrictionsModel {
 
     private func persistSelection() {
         UserDefaults.standard.set(
-            ["mode": mode.rawValue, "selected": Array(selected), "locked": lockedOnPhone] as [String: Any],
+            ["mode": mode.rawValue, "selected": Array(selected), "locked": lockedOnPhone, "sites": sites] as [String: Any],
             forKey: storageKey
         )
     }
@@ -236,6 +252,9 @@ final class AppRestrictionsModel {
         }
         if let locked = saved["locked"] as? Bool {
             lockedOnPhone = locked
+        }
+        if let savedSites = saved["sites"] as? [String] {
+            sites = savedSites
         }
     }
 }

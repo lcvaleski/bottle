@@ -28,31 +28,87 @@ enum RestrictionsProfile {
     /// Identifiers earlier builds used. Treated as Bottle's own and replaced on the next Apply.
     static let legacyIdentifiers: Set<String> = ["com.bottle.app-restrictions"]
 
-    /// - Parameter lockedOnPhone: When true (the default), iOS refuses to remove the profile
-    ///   from Settings → VPN & Device Management; only the supervising Mac can remove it.
-    ///   Supervised devices honour this; unsupervised ones ignore it.
-    static func data(mode: RestrictionMode, bundleIDs: [String], organizationName: String, lockedOnPhone: Bool = true) throws -> Data {
+    /// - Parameters:
+    ///   - sites: Hostnames to block in Safari and in-app browsers (web content filter payload).
+    ///   - lockedOnPhone: When true, iOS refuses to remove the profile from Settings → VPN & Device
+    ///     Management; only the supervising Mac can remove it. Supervised devices honour this.
+    ///   - removalPassword: When set, the profile is removable from Settings *only* with this
+    ///     password (`lockedOnPhone` is ignored). This is the paid tier's door.
+    static func data(
+        mode: RestrictionMode,
+        bundleIDs: [String],
+        sites: [String] = [],
+        organizationName: String,
+        lockedOnPhone: Bool = true,
+        removalPassword: String? = nil
+    ) throws -> Data {
         let key = mode == .block ? "blockedAppBundleIDs" : "allowListedAppBundleIDs"
-        let payload: [String: Any] = [
+        var payloads: [[String: Any]] = [[
             "PayloadType": "com.apple.applicationaccess",
             "PayloadVersion": 1,
             "PayloadIdentifier": identifier + ".applicationaccess",
             "PayloadUUID": UUID().uuidString,
             "PayloadDisplayName": "App Restrictions",
             key: bundleIDs.sorted(),
-        ]
+        ]]
+
+        let urls = denyListURLs(for: sites)
+        if !urls.isEmpty {
+            payloads.append([
+                "PayloadType": "com.apple.webcontent-filter",
+                "PayloadVersion": 1,
+                "PayloadIdentifier": identifier + ".webfilter",
+                "PayloadUUID": UUID().uuidString,
+                "PayloadDisplayName": "Website Restrictions",
+                "FilterType": "BuiltIn",
+                "AutoFilterEnabled": false,
+                "DenyListURLs": urls,
+            ])
+        }
+
+        if let removalPassword, !removalPassword.isEmpty {
+            payloads.append([
+                "PayloadType": "com.apple.profileRemovalPassword",
+                "PayloadVersion": 1,
+                "PayloadIdentifier": identifier + ".removalpassword",
+                "PayloadUUID": UUID().uuidString,
+                "PayloadDisplayName": "Removal Password",
+                "RemovalPassword": removalPassword,
+            ])
+        }
+
         let root: [String: Any] = [
             "PayloadType": "Configuration",
             "PayloadVersion": 1,
             "PayloadIdentifier": identifier,
             "PayloadUUID": UUID().uuidString,
             "PayloadDisplayName": "Bottle App Restrictions",
-            "PayloadDescription": "Installed by Bottle to \(mode == .block ? "block" : "allow") selected apps.",
+            "PayloadDescription": "Installed by Bottle to \(mode == .block ? "block" : "allow") selected apps\(urls.isEmpty ? "" : " and block selected websites").",
             "PayloadOrganization": organizationName,
-            "PayloadRemovalDisallowed": lockedOnPhone,
-            "PayloadContent": [payload],
+            "PayloadRemovalDisallowed": removalPassword == nil ? lockedOnPhone : false,
+            "PayloadContent": payloads,
         ]
         return try PropertyListSerialization.data(fromPropertyList: root, format: .xml, options: 0)
+    }
+
+    /// "instagram.com" → https/http × bare/www. Accepts pasted URLs too.
+    static func normalizeSite(_ raw: String) -> String? {
+        var text = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !text.isEmpty else { return nil }
+        if let range = text.range(of: "://") { text = String(text[range.upperBound...]) }
+        text = text.split(separator: "/", maxSplits: 1, omittingEmptySubsequences: true).first.map(String.init) ?? text
+        text = text.split(separator: "?", maxSplits: 1).first.map(String.init) ?? text
+        if text.hasPrefix("www.") { text = String(text.dropFirst(4)) }
+        guard text.contains("."), !text.contains(" ") else { return nil }
+        return text
+    }
+
+    static func denyListURLs(for sites: [String]) -> [String] {
+        var urls: [String] = []
+        for host in sites.compactMap(normalizeSite) {
+            urls += ["https://\(host)", "http://\(host)", "https://www.\(host)", "http://www.\(host)"]
+        }
+        return Array(NSOrderedSet(array: urls)) as? [String] ?? urls
     }
 
     /// Apple apps that don't always show up in `installedApps` but can be blocked.

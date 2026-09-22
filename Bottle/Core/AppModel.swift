@@ -9,6 +9,7 @@ final class AppModel {
     let cfgutil: CfgUtil
     let monitor: DeviceMonitor
     let iconCache: IconCache
+    let lock: LockModel
 
     var showLog = false
     private(set) var wizards: [String: SupervisionWizard] = [:]
@@ -19,6 +20,8 @@ final class AppModel {
         cfgutil.identity = identityStore.identity
         monitor = DeviceMonitor(cfgutil: cfgutil)
         iconCache = IconCache(cfgutil: cfgutil)
+        lock = LockModel(cfgutil: cfgutil, identityStore: identityStore)
+        if lock.isLocked { lock.startPolling() }
     }
 
     func adoptIdentity(_ identity: SupervisionIdentity) {

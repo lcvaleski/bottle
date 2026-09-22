@@ -7,3 +7,4 @@ DerivedData/
 xcuserdata/
 dist/
 .vercel/
+.env*

@@ -102,3 +102,52 @@ struct SupervisionIdentityTests {
         #expect(SupervisionIdentityStore.organization(fromLabel: "Acme") == "Acme")
     }
 }
+
+struct LockProfileTests {
+    private func root(_ data: Data) throws -> [String: Any] {
+        try #require(PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any])
+    }
+    private func payloads(_ root: [String: Any]) throws -> [[String: Any]] {
+        try #require(root["PayloadContent"] as? [[String: Any]])
+    }
+
+    @Test func removalPasswordMakesProfileRemovableWithPassword() throws {
+        let data = try RestrictionsProfile.data(mode: .block, bundleIDs: ["com.a"], organizationName: "x", lockedOnPhone: true, removalPassword: "abc123")
+        let r = try root(data)
+        #expect(r["PayloadRemovalDisallowed"] as? Bool == false, "password door only works when removal is allowed")
+        let pw = try #require(try payloads(r).first { $0["PayloadType"] as? String == "com.apple.profileRemovalPassword" })
+        #expect(pw["RemovalPassword"] as? String == "abc123")
+    }
+
+    @Test func noPasswordPayloadByDefault() throws {
+        let data = try RestrictionsProfile.data(mode: .block, bundleIDs: ["com.a"], organizationName: "x")
+        #expect(try payloads(root(data)).count == 1)
+    }
+
+    @Test func sitesAddWebFilterPayload() throws {
+        let data = try RestrictionsProfile.data(mode: .block, bundleIDs: [], sites: ["instagram.com", "https://www.reddit.com/r/all"], organizationName: "x")
+        let filter = try #require(try payloads(root(data)).first { $0["PayloadType"] as? String == "com.apple.webcontent-filter" })
+        #expect(filter["FilterType"] as? String == "BuiltIn")
+        #expect(filter["AutoFilterEnabled"] as? Bool == false)
+        let urls = try #require(filter["DenyListURLs"] as? [String])
+        #expect(urls.contains("https://instagram.com"))
+        #expect(urls.contains("https://www.instagram.com"))
+        #expect(urls.contains("http://reddit.com"))
+        #expect(urls.count == 8)
+    }
+
+    @Test func normalizeSite() {
+        #expect(RestrictionsProfile.normalizeSite("  Instagram.com ") == "instagram.com")
+        #expect(RestrictionsProfile.normalizeSite("https://www.reddit.com/r/all?x=1") == "reddit.com")
+        #expect(RestrictionsProfile.normalizeSite("www.tiktok.com") == "tiktok.com")
+        #expect(RestrictionsProfile.normalizeSite("notadomain") == nil)
+        #expect(RestrictionsProfile.normalizeSite("") == nil)
+    }
+
+    @Test func libraryStillReadsAppsFromMultiPayloadProfile() throws {
+        let data = try RestrictionsProfile.data(mode: .allow, bundleIDs: ["com.apple.MobileSMS"], sites: ["x.com"], organizationName: "x", removalPassword: "p")
+        let r = try #require(ProfileLibrary.restrictions(in: try root(data)))
+        #expect(r.mode == .allow)
+        #expect(r.bundleIDs == ["com.apple.MobileSMS"])
+    }
+}

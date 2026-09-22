@@ -92,6 +92,8 @@ struct DetailView: View {
         } else if let device = model.monitor.selectedDevice {
             DeviceView(device: device)
                 .id(device.ecid)
+        } else if model.lock.isLocked {
+            LockedView(device: nil)
         } else {
             NoDeviceView(error: model.monitor.lastError)
         }

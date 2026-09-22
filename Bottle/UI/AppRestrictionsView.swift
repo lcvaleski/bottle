@@ -4,6 +4,8 @@ struct AppRestrictionsView: View {
     @Bindable var model: AppRestrictionsModel
     @State private var confirmRemove = false
     @State private var profileToRemove: InstalledProfile?
+    @State private var showLockSheet = false
+    let device: Device
 
     var body: some View {
         VStack(spacing: 0) {
@@ -19,6 +21,9 @@ struct AppRestrictionsView: View {
             footer
         }
         .task { await model.load() }
+        .sheet(isPresented: $showLockSheet) {
+            LockSheet(device: device, restrictions: model)
+        }
         .confirmationDialog("Remove all app restrictions?", isPresented: $confirmRemove, titleVisibility: .visible) {
             Button("Remove Restrictions", role: .destructive) {
                 Task { await model.removeRestrictions() }
@@ -84,6 +89,28 @@ struct AppRestrictionsView: View {
             if !model.otherProfiles.isEmpty {
                 Section("Other profiles on this iPhone") {
                     ForEach(model.otherProfiles) { profile in profileRow(profile) }
+                }
+            }
+            Section("Blocked websites") {
+                HStack {
+                    TextField("instagram.com", text: $model.siteInput)
+                        .textFieldStyle(.roundedBorder)
+                        .onSubmit { model.addSite() }
+                    Button("Add") { model.addSite() }
+                        .disabled(RestrictionsProfile.normalizeSite(model.siteInput) == nil)
+                }
+                ForEach(model.sites, id: \.self) { host in
+                    HStack {
+                        Image(systemName: "globe").foregroundStyle(.secondary).frame(width: 30)
+                        Text(host)
+                        Spacer()
+                        Button { model.removeSite(host) } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }
+                            .buttonStyle(.plain)
+                    }
+                }
+                if model.sites.isEmpty {
+                    Text("Blocked in Safari and in-app browsers. Apps aren't affected — block those above.")
+                        .font(.caption).foregroundStyle(.secondary)
                 }
             }
             if !model.builtInApps.isEmpty {
@@ -192,11 +219,19 @@ struct AppRestrictionsView: View {
             Button("Remove Restrictions") { confirmRemove = true }
                 .disabled(!model.profileInstalled || model.isApplying)
 
+            Button {
+                showLockSheet = true
+            } label: {
+                Label("Lock…", systemImage: "lock")
+            }
+            .help("Hand the ability to unblock to the Bottle server, with a delay")
+            .disabled(model.isApplying || !model.profileInstalled)
+
             Button("Apply to iPhone") {
                 Task { await model.apply() }
             }
             .buttonStyle(.borderedProminent)
-            .disabled(model.isApplying || (model.mode == .allow && model.selected.isEmpty))
+            .disabled(model.isApplying || (model.mode == .allow && model.selected.isEmpty && model.sites.isEmpty))
         }
         .padding(12)
         .background(.bar)

@@ -9,7 +9,9 @@ struct DeviceView: View {
         VStack(spacing: 0) {
             DeviceHeaderView(device: device)
             Divider()
-            if let wizard = model.wizard(for: device) {
+            if model.lock.isLocked {
+                LockedView(device: device)
+            } else if let wizard = model.wizard(for: device) {
                 SupervisionWizardView(wizard: wizard, device: device)
             } else if device.isSupervised == true {
                 if model.identityStore.identity == nil || showIdentitySetup {
@@ -20,7 +22,7 @@ struct DeviceView: View {
                         identityMismatchBanner(identity: identity, phoneOrg: org)
                         Divider()
                     }
-                    AppRestrictionsView(model: model.restrictions(for: device))
+                    AppRestrictionsView(model: model.restrictions(for: device), device: device)
                 }
             } else {
                 SupervisionIntroView(device: device)

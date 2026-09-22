@@ -161,6 +161,44 @@ final class SupervisionIdentityStore {
         return try finish(organizationName: org, log: log, source: "Imported \(url.lastPathComponent)")
     }
 
+    // MARK: - Escrow support (paid tier)
+
+    struct Exported: Codable {
+        let certificate: String   // base64 DER
+        let privateKey: String    // base64 DER
+        let organizationName: String
+    }
+
+    func export() throws -> Exported {
+        guard let identity else { throw IdentityError.importFailed("no identity to export") }
+        return Exported(
+            certificate: try Data(contentsOf: identity.certificateURL).base64EncodedString(),
+            privateKey: try Data(contentsOf: identity.privateKeyURL).base64EncodedString(),
+            organizationName: identity.organizationName
+        )
+    }
+
+    func importExported(_ exported: Exported, log: ActivityLog) throws -> SupervisionIdentity {
+        guard let cert = Data(base64Encoded: exported.certificate), let key = Data(base64Encoded: exported.privateKey),
+              !cert.isEmpty, !key.isEmpty else {
+            throw IdentityError.importFailed("escrowed identity is not valid base64")
+        }
+        try FileManager.default.createDirectory(at: Self.directory, withIntermediateDirectories: true)
+        try cert.write(to: Self.certificateURL)
+        try key.write(to: Self.privateKeyURL)
+        return try finish(organizationName: exported.organizationName, log: log, source: "Restored identity from escrow")
+    }
+
+    /// Removes the identity from this Mac. Only ever called after the server confirmed it holds a copy.
+    func deleteLocal(log: ActivityLog) throws {
+        let fm = FileManager.default
+        for url in [Self.certificateURL, Self.privateKeyURL, Self.organizationURL] where fm.fileExists(atPath: url.path) {
+            try fm.removeItem(at: url)
+        }
+        identity = nil
+        log.info("Deleted local supervision identity (escrowed)")
+    }
+
     // MARK: - Helpers
 
     private func extract(p12: URL, password: String, log: ActivityLog) async throws {

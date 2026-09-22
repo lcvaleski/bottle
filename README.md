@@ -122,6 +122,28 @@ Files land in `~/Library/Application Support/Bottle/SupervisionIdentity/`
 **Back these up.** Without the key this Mac can no longer manage the phone, and
 re-supervising means another erase.
 
+## Lock (the paid tier, free during beta)
+
+`site/api/` is a tiny service on Vercel functions with one encrypted JSON blob
+per lock in a private Vercel Blob store (`LOCK_SECRET` encrypts at rest). When
+the user clicks **Lock…** in the app:
+
+1. `POST /api/locks` creates the lock and returns a random removal password once.
+2. The app reinstalls the profile with a `com.apple.profileRemovalPassword`
+   payload (and `PayloadRemovalDisallowed: false`).
+3. `PUT /api/locks/:id/identity` escrows the Mac's supervision identity; only
+   after the server confirms does the app delete its local copy.
+
+Unblocking happens from the phone at `corephone.org/l/<id>#<token>`:
+`POST …/unlock` starts the timer, `…/cancel` stops it, `…/approve` (approver
+token) releases immediately. Once released, `GET …/:id` returns the password
+(and `?identity=1` the identity), the user types the password into Settings →
+VPN & Device Management, and the Mac app's **Finish unlock** pulls the identity
+back and returns to switch mode.
+
+Neither the password nor the identity is useful without the phone in hand, so a
+leak of the store is a nuisance, not a takeover. No accounts, no payments yet.
+
 ## Existing profiles
 
 The phone only reports a profile's identifier and name, never its payload. To
