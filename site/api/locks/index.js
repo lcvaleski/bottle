@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   try { body = await readJSON(req); } catch { return res.status(400).json({ error: 'Bad JSON' }); }
 
   const delayHours = Number(body.delayHours);
-  if (!Number.isFinite(delayHours) || delayHours < 5 / 60 || delayHours > 24 * 365) {
+  if (!Number.isFinite(delayHours) || delayHours < 0.08 || delayHours > 24 * 365) {
     return res.status(400).json({ error: 'delayHours must be between 0.0833 (5 minutes) and 8760' });
   }
   const apps = Array.isArray(body.apps) ? body.apps.filter((s) => typeof s === 'string').slice(0, 500) : [];
