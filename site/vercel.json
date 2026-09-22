@@ -27,11 +27,11 @@
   "rewrites": [
     {
       "source": "/l/:id",
-      "destination": "/lock.html"
+      "destination": "/lock"
     },
     {
       "source": "/a/:id",
-      "destination": "/lock.html"
+      "destination": "/lock"
     }
   ]
 }
