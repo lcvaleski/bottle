@@ -33,7 +33,7 @@ final class LockModel {
 
     // MARK: - Lock
 
-    func lock(device: Device, restrictions: AppRestrictionsModel, delayHours: Int, partner: Bool) async {
+    func lock(device: Device, restrictions: AppRestrictionsModel, delayHours: Double, partner: Bool) async {
         guard !isWorking, record == nil else { return }
         guard let identity = identityStore.identity else {
             errorMessage = "No supervision identity on this Mac — nothing to hand over."

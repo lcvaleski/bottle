@@ -97,6 +97,7 @@
         const fail = (e) => { $('#error p').textContent = e.message || String(e); show(['error']); };
 
         function humanDelay(hours) {
+            if (hours < 1) { const m = Math.round(hours * 60); return `${m} minute${m === 1 ? '' : 's'}`; }
             if (hours % 24 === 0) { const d = hours / 24; return `${d} day${d === 1 ? '' : 's'}`; }
             return `${hours} hour${hours === 1 ? '' : 's'}`;
         }

@@ -9,10 +9,10 @@ struct LockSheet: View {
     let device: Device
     let restrictions: AppRestrictionsModel
 
-    @State private var delayHours = 24
+    @State private var delayHours: Double = 24
     @State private var partner = false
 
-    private let delays: [(String, Int)] = [("1 hour", 1), ("6 hours", 6), ("24 hours", 24), ("3 days", 72), ("1 week", 168), ("30 days", 720)]
+    private let delays: [(String, Double)] = [("5 minutes", 5.0 / 60), ("1 hour", 1), ("6 hours", 6), ("24 hours", 24), ("3 days", 72), ("1 week", 168), ("30 days", 720)]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -189,7 +189,7 @@ struct LockedView: View {
             GroupBox {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Locked").font(.headline)
-                    Text("Asking to unblock starts a \(record.delayHours)-hour wait. Nothing — including this Mac — can shorten it\(record.approverURL == nil ? "." : ", except the person you chose.")")
+                    Text("Asking to unblock starts a \(humanDelay(hours: record.delayHours)) wait. Nothing — including this Mac — can shorten it\(record.approverURL == nil ? "." : ", except the person you chose.")")
                     Button("Request unblock") { Task { await lock.requestUnlock() } }
                         .disabled(lock.isWorking || status == nil)
                 }

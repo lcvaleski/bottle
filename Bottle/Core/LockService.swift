@@ -8,7 +8,7 @@ struct LockService {
     struct LockStatus: Codable {
         let id: String
         var state: String            // locked | unlocking | released
-        let delayHours: Int
+        let delayHours: Double
         let createdAt: Double
         var unlockRequestedAt: Double?
         var unlockAt: Double?
@@ -37,7 +37,7 @@ struct LockService {
         }
     }
 
-    func create(delayHours: Int, mode: RestrictionMode, apps: [String], sites: [String], partner: Bool, organizationName: String) async throws -> Created {
+    func create(delayHours: Double, mode: RestrictionMode, apps: [String], sites: [String], partner: Bool, organizationName: String) async throws -> Created {
         try await request("POST", "/api/locks", body: [
             "delayHours": delayHours, "mode": mode.rawValue, "apps": apps, "sites": sites,
             "partner": partner, "organizationName": organizationName,
@@ -84,13 +84,20 @@ struct LockService {
     }
 }
 
+/// "5 minutes", "24 hours", "3 days".
+func humanDelay(hours: Double) -> String {
+    if hours < 1 { let m = Int((hours * 60).rounded()); return "\(m) minute\(m == 1 ? "" : "s")" }
+    if hours.truncatingRemainder(dividingBy: 24) == 0 { let d = Int(hours / 24); return "\(d) day\(d == 1 ? "" : "s")" }
+    let h = Int(hours); return "\(h) hour\(h == 1 ? "" : "s")"
+}
+
 /// What this Mac remembers about its active lock. Lives next to the (now absent) identity.
 struct LockRecord: Codable {
     let id: String
     let token: String
     let statusURL: String
     let approverURL: String?
-    let delayHours: Int
+    let delayHours: Double
     let createdAt: Date
     let deviceUDID: String?
     let deviceName: String
