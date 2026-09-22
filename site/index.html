@@ -160,7 +160,7 @@
 
         <section class="tiers">
             <h2>Free</h2>
-            <svg class="diagram" viewBox="0 0 440 120" role="img" aria-label="Your iPhone connected by cable to your Mac, which holds the key">
+            <svg class="diagram" viewBox="0 0 440 120" role="img" aria-label="Your iPhone connected by cable to your Mac, the only thing that can unblock it">
                 <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <!-- phone -->
                     <rect x="52" y="14" width="26" height="46" rx="4"/>
@@ -182,18 +182,18 @@
                     <text x="65" y="82">your iPhone</text>
                     <text x="174" y="30" fill="#666">cable</text>
                     <text x="310" y="82">your Mac</text>
-                    <text x="310" y="98" fill="#666">holds the key</text>
+                    <text x="310" y="98" fill="#666">can unblock</text>
                 </g>
             </svg>
-            <p><strong>A switch.</strong> Plug in, pick apps, Apply. To unblock: plug in again.</p>
+            <p><strong>A switch.</strong> Plug in, pick apps, Apply. Only this Mac can unblock them — so unblocking means the cable.</p>
             <details>
                 <summary>Why it holds</summary>
-                <p>The key that lets a computer manage your phone lives on your Mac. The phone's own Settings has no remove button. So unblocking means the walk back to your laptop and the cable.</p>
+                <p>Apple lets exactly one computer manage a supervised phone: the one that set it up. That's your Mac. The phone's own Settings has no remove button. So unblocking means the walk back to your laptop and the cable.</p>
                 <p>No account, no server. If we vanish, nothing changes.</p>
             </details>
 
             <h2>Paid <span class="soon">coming</span></h2>
-            <svg class="diagram" viewBox="0 0 440 150" role="img" aria-label="Your iPhone with a password lock; your Mac with the key removed; our server holding the key behind a timer">
+            <svg class="diagram" viewBox="0 0 440 150" role="img" aria-label="Your iPhone locked; your Mac can no longer unblock it; our server can, after a timer">
                 <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <!-- phone with lock -->
                     <rect x="52" y="14" width="26" height="46" rx="4"/>
@@ -227,17 +227,18 @@
                 </g>
                 <g font-size="12" fill="#333" text-anchor="middle">
                     <text x="65" y="82">your iPhone</text>
+                    <text x="65" y="98" fill="#666">locked</text>
                     <text x="220" y="82">your Mac</text>
-                    <text x="220" y="98" fill="#666">key deleted</text>
+                    <text x="220" y="98" fill="#666">can't unblock</text>
                     <text x="360" y="82">our server</text>
-                    <text x="360" y="98" fill="#666">holds the key</text>
-                    <text x="212" y="145" fill="#666">the password, after the delay you chose</text>
+                    <text x="360" y="98" fill="#666">can unblock</text>
+                    <text x="212" y="145" fill="#666">…but only after the delay you chose</text>
                 </g>
             </svg>
-            <p><strong>A lock.</strong> Click Lock and the key leaves your Mac. To unblock: wait out the delay you chose, or ask the person you chose.</p>
+            <p><strong>A lock.</strong> Click Lock and nothing can unblock — not even your Mac — until the delay you chose runs out, or the person you chose says yes.</p>
             <details>
                 <summary>Why it holds</summary>
-                <p>The profile is reinstalled with a password you never see, and the key is moved from your Mac to our server. With the key gone, plugging in does nothing — a supervised phone only obeys the computer that holds its key. iOS removes a password-protected profile only when you type the password, and we release it only after the delay, or when your person approves. Then you type it into Settings on the phone. No Mac needed.</p>
+                <p>Lock does two things. It re-installs the block with a password you never see, and it moves your Mac's permission to manage the phone onto our server. After that, plugging into your Mac does nothing. The only way to unblock is the password, which iOS demands in Settings — and we hand it over only after the delay, or when your person approves. No Mac needed.</p>
                 <p>The one door that always works is erasing the phone. That's Apple's rule, and it's why nothing here can brick a phone.</p>
             </details>
         </section>
