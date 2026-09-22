@@ -225,7 +225,7 @@ struct AppRestrictionsView: View {
                 Label("Lock…", systemImage: "lock")
             }
             .help("Hand the ability to unblock to the Bottle server, with a delay")
-            .disabled(model.isApplying || !model.profileInstalled)
+            .disabled(model.isApplying || (model.selected.isEmpty && model.sites.isEmpty))
 
             Button("Apply to iPhone") {
                 Task { await model.apply() }
