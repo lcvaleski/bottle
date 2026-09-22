@@ -83,6 +83,8 @@
         .button:hover { background: #333; }
         .button:active { background: #4A90D9; }
         .fineprint { font-size: 13px; color: #666; margin: 10px 0 0; }
+        .oss { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 14px; margin: 14px 0 0; }
+        .oss span { color: #333; }
 
         section {
             width: 100%;
@@ -130,7 +132,11 @@
 
         <div class="cta">
             <a class="button" href="https://github.com/lcvaleski/bottle/releases/latest">Download for Mac</a>
-            <p class="fineprint">Free · macOS 14 or later · requires Apple Configurator</p>
+            <p class="fineprint">Free and open source · macOS 14 or later · requires Apple Configurator</p>
+            <p class="oss">
+                <a class="github-button" href="https://github.com/lcvaleski/bottle" data-show-count="true" data-size="large" aria-label="Star lcvaleski/bottle on GitHub">Star</a>
+                <span>MIT licensed. Every line is on <a href="https://github.com/lcvaleski/bottle">GitHub</a>.</span>
+            </p>
         </div>
 
         <nav class="links">
@@ -141,5 +147,6 @@
 
     </main>
 
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
 </body>
 </html>
