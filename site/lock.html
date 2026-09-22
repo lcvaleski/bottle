@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Bottle</title>
+    <link rel="icon" type="image/png" href="/icon.png">
+    <link rel="apple-touch-icon" href="/icon.png">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { margin: 0; }
+        body {
+            background: white; color: black;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+            font-size: 17px; line-height: 1.5;
+            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+            -webkit-font-smoothing: antialiased;
+        }
+        a { color: #0000EE; }
+        main { max-width: 480px; margin: 0 auto; padding: 40px 20px 60px; }
+        h1 { font-size: 24px; margin: 0 0 16px; }
+        p { margin: 0 0 12px; }
+        .muted { color: #666; font-size: 15px; }
+        .button {
+            display: inline-block; background: black; color: white; font-weight: bold; font-size: 18px;
+            padding: 14px 28px; border: 0; border-radius: 0; cursor: pointer; font-family: inherit; margin: 12px 0 4px;
+        }
+        .button:disabled { background: #999; cursor: default; }
+        .button.secondary { background: white; color: black; border: 2px solid black; }
+        .countdown { font-size: 40px; font-weight: bold; font-variant-numeric: tabular-nums; margin: 8px 0; }
+        .password {
+            font-family: ui-monospace, Menlo, monospace; font-size: 32px; letter-spacing: 3px;
+            background: rgb(243, 243, 243); border: 3.5px solid rgb(233, 233, 233);
+            padding: 16px; margin: 12px 0; text-align: center; user-select: all; -webkit-user-select: all;
+        }
+        ol { padding-left: 22px; } ol li { margin-bottom: 8px; }
+        .error { color: #c00; }
+        [hidden] { display: none !important; }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>Bottle</h1>
+        <div id="loading"><p class="muted">Checking…</p></div>
+        <div id="error" hidden><p class="error"></p></div>
+
+        <!-- user: locked -->
+        <div id="locked" hidden>
+            <p><strong>Your iPhone is locked.</strong></p>
+            <p>Asking to unblock starts a <span class="delay"></span> wait. Nothing happens until it runs out. You can change your mind while it's counting.</p>
+            <button class="button" id="request">Request unblock</button>
+            <p class="muted approver-note" hidden>Or the person you chose can approve it sooner.</p>
+        </div>
+
+        <!-- user: unlocking -->
+        <div id="unlocking" hidden>
+            <p><strong>Unblocking in</strong></p>
+            <div class="countdown" id="countdown">–</div>
+            <p class="muted">Come back here when it reaches zero. Close the tab, forget about it — the clock runs on our side.</p>
+            <button class="button secondary" id="cancel">Never mind, keep it locked</button>
+        </div>
+
+        <!-- user: released -->
+        <div id="released" hidden>
+            <p><strong>Your password:</strong></p>
+            <div class="password" id="password"></div>
+            <p>On this iPhone:</p>
+            <ol>
+                <li>Open <strong>Settings → General → VPN &amp; Device Management</strong></li>
+                <li>Tap <strong>Bottle App Restrictions</strong></li>
+                <li>Tap <strong>Remove Profile</strong>, enter your iPhone passcode</li>
+                <li>Enter the password above</li>
+            </ol>
+            <p class="muted">Your apps come back immediately. To lock again, open Bottle on your Mac — it will pick up where you left off.</p>
+        </div>
+
+        <!-- approver -->
+        <div id="approver" hidden>
+            <p>Someone chose you as the person who can unblock their iPhone early.</p>
+            <p class="muted">They asked Bottle to block some apps and gave you the say on when they come back. If they've talked to you and you're okay with it, approve below. Otherwise do nothing — their timer still runs on its own.</p>
+            <button class="button" id="approve">Approve unblock</button>
+            <p id="approved" hidden><strong>Done.</strong> They can get their password now.</p>
+        </div>
+    </main>
+
+    <script>
+        const [, kind, id] = location.pathname.match(/^\/(l|a)\/([a-z0-9]+)/) || [];
+        const token = location.hash.slice(1);
+        const $ = (s) => document.querySelector(s);
+        const show = (ids) => ['loading','error','locked','unlocking','released','approver'].forEach((x) => { $('#' + x).hidden = !ids.includes(x); });
+        const api = (path, method = 'GET') => fetch(`/api/locks/${id}${path}`, { method, headers: { Authorization: `Bearer ${token}` } }).then(async (r) => {
+            const body = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(body.error || r.statusText);
+            return body;
+        });
+        const fail = (e) => { $('#error p').textContent = e.message || String(e); show(['error']); };
+
+        function humanDelay(hours) {
+            if (hours % 24 === 0) { const d = hours / 24; return `${d} day${d === 1 ? '' : 's'}`; }
+            return `${hours} hour${hours === 1 ? '' : 's'}`;
+        }
+
+        let timer;
+        function render(lock) {
+            clearInterval(timer);
+            if (lock.state === 'locked') {
+                $('.delay').textContent = humanDelay(lock.delayHours);
+                $('.approver-note').hidden = !lock.hasApprover;
+                show(['locked']);
+            } else if (lock.state === 'unlocking') {
+                show(['unlocking']);
+                const tick = () => {
+                    const ms = Math.max(0, lock.unlockAt - Date.now());
+                    const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+                    $('#countdown').textContent = `${h}h ${String(m).padStart(2, '0')}m ${String(sec).padStart(2, '0')}s`;
+                    if (ms === 0) { clearInterval(timer); api('').then(render).catch(fail); }
+                };
+                tick(); timer = setInterval(tick, 1000);
+            } else if (lock.state === 'released') {
+                $('#password').textContent = lock.password || '(missing)';
+                show(['released']);
+            }
+        }
+
+        if (!kind || !id || !token) {
+            fail(new Error('This link is incomplete. Open it exactly as Bottle gave it to you.'));
+        } else if (kind === 'a') {
+            show(['approver']);
+            $('#approve').onclick = () => { $('#approve').disabled = true; api('/approve', 'POST').then(() => { $('#approved').hidden = false; }).catch(fail); };
+        } else {
+            api('').then(render).catch(fail);
+            $('#request').onclick = () => { $('#request').disabled = true; api('/unlock', 'POST').then(render).catch(fail).finally(() => { $('#request').disabled = false; }); };
+            $('#cancel').onclick = () => { $('#cancel').disabled = true; api('/cancel', 'POST').then(render).catch(fail).finally(() => { $('#cancel').disabled = false; }); };
+        }
+    </script>
+</body>
+</html>
