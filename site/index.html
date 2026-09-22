@@ -107,6 +107,7 @@
         .tiers h2 + p { margin-top: 0; }
         .tiers p { margin: 0 0 10px; }
         .tiers .why { color: #333; font-size: 15px; }
+        .diagram { display: block; width: 100%; max-width: 440px; height: auto; margin: 6px 0 14px; color: black; }
         .tiers h2:not(:first-child) { margin-top: 28px; }
         .soon { font-weight: normal; font-size: 12px; color: #666; border: 1px solid rgb(233, 233, 233); padding: 1px 6px; margin-left: 6px; vertical-align: middle; }
 
@@ -156,11 +157,77 @@
 
         <section class="tiers">
             <h2>Free</h2>
+            <svg class="diagram" viewBox="0 0 440 120" role="img" aria-label="Your iPhone connected by cable to your Mac, which holds the key">
+                <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <!-- phone -->
+                    <rect x="52" y="14" width="26" height="46" rx="4"/>
+                    <line x1="61" y1="54" x2="69" y2="54"/>
+                    <!-- cable -->
+                    <line x1="86" y1="37" x2="262" y2="37"/>
+                    <rect x="80" y="33" width="8" height="8" rx="1"/>
+                    <rect x="260" y="33" width="8" height="8" rx="1"/>
+                    <!-- mac -->
+                    <rect x="282" y="16" width="56" height="34" rx="3"/>
+                    <line x1="274" y1="56" x2="346" y2="56"/>
+                    <!-- key on the mac -->
+                    <circle cx="298" cy="33" r="5"/>
+                    <line x1="302" y1="36" x2="318" y2="46"/>
+                    <line x1="312" y1="43" x2="309" y2="47"/>
+                    <line x1="316" y1="45" x2="313" y2="49"/>
+                </g>
+                <g font-size="12" fill="#333" text-anchor="middle">
+                    <text x="65" y="82">your iPhone</text>
+                    <text x="174" y="30" fill="#666">cable</text>
+                    <text x="310" y="82">your Mac</text>
+                    <text x="310" y="98" fill="#666">holds the key</text>
+                </g>
+            </svg>
             <p><strong>The app is a switch.</strong> Plug in, check the apps you want gone, click Apply. Want one back? Plug in, uncheck, Apply.</p>
             <p class="why">Why it holds: the key that lets a computer manage your phone (the supervision identity) lives on your Mac. The phone's own Settings has no remove button for the profile. So the only way to unblock is the walk back to your laptop and the cable.</p>
             <p class="why">Works forever, no account, no server. If we vanish, nothing changes.</p>
 
             <h2>Paid <span class="soon">coming</span></h2>
+            <svg class="diagram" viewBox="0 0 440 150" role="img" aria-label="Your iPhone with a password lock; your Mac with the key removed; our server holding the key behind a timer">
+                <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <!-- phone with lock -->
+                    <rect x="52" y="14" width="26" height="46" rx="4"/>
+                    <line x1="61" y1="54" x2="69" y2="54"/>
+                    <rect x="59" y="32" width="12" height="10" rx="1.5"/>
+                    <path d="M61 32 v-3 a4 4 0 0 1 8 0 v3"/>
+                    <!-- mac, key crossed out -->
+                    <rect x="192" y="16" width="56" height="34" rx="3"/>
+                    <line x1="184" y1="56" x2="256" y2="56"/>
+                    <g stroke="#999">
+                        <circle cx="208" cy="33" r="5"/>
+                        <line x1="212" y1="36" x2="228" y2="46"/>
+                    </g>
+                    <line x1="200" y1="46" x2="234" y2="22" stroke="#c00" stroke-width="2"/>
+                    <!-- server -->
+                    <rect x="330" y="14" width="60" height="16" rx="2"/>
+                    <rect x="330" y="34" width="60" height="16" rx="2"/>
+                    <circle cx="338" cy="22" r="1.5" fill="currentColor"/>
+                    <circle cx="338" cy="42" r="1.5" fill="currentColor"/>
+                    <!-- key on the server -->
+                    <circle cx="360" cy="22" r="4"/>
+                    <line x1="363" y1="24" x2="376" y2="32"/>
+                    <line x1="372" y1="30" x2="370" y2="33"/>
+                    <!-- clock -->
+                    <circle cx="374" cy="42" r="6"/>
+                    <line x1="374" y1="42" x2="374" y2="38"/>
+                    <line x1="374" y1="42" x2="377" y2="44"/>
+                    <!-- password path: server → phone, after the delay (routed under the labels) -->
+                    <path d="M360 106 C 360 130, 65 130, 65 112" stroke-dasharray="3 4"/>
+                    <path d="M60 118 L65 110 L70 118"/>
+                </g>
+                <g font-size="12" fill="#333" text-anchor="middle">
+                    <text x="65" y="82">your iPhone</text>
+                    <text x="220" y="82">your Mac</text>
+                    <text x="220" y="98" fill="#666">key deleted</text>
+                    <text x="360" y="82">our server</text>
+                    <text x="360" y="98" fill="#666">holds the key</text>
+                    <text x="212" y="145" fill="#666">the password, after the delay you chose</text>
+                </g>
+            </svg>
             <p><strong>The app hands over the keys.</strong> When you click Lock, the profile is reinstalled with a password you never see, and the supervision key is uploaded to our server and deleted from your Mac.</p>
             <p class="why">Why it holds: with the key gone, plugging into your Mac does nothing — a supervised phone only obeys the computer that holds its key. And iOS will only remove a password-protected profile if you type the password. We hold it, and we release it only after the delay you picked, or when the person you chose approves. Then you type it into Settings on the phone. No Mac needed.</p>
             <p class="why">The one door that always works is erasing the phone. That's Apple's rule, not ours, and it's the reason this is safe: nothing here can brick a phone.</p>
