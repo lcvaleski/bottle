@@ -107,11 +107,19 @@ if $NOTARIZE; then
 fi
 
 log "Building DMG"
-STAGING="$(mktemp -d)"
-cp -R "$APP" "$STAGING/"
-ln -s /Applications "$STAGING/Applications"
-hdiutil create -volname "$APP_NAME" -srcfolder "$STAGING" -ov -format UDZO -quiet "$DIST/$DMG_NAME"
-rm -rf "$STAGING"
+# dmgbuild writes the .DS_Store itself, so the installer window (background,
+# icon positions, no toolbar) is identical on a laptop and on a CI runner.
+# Without it, fall back to a plain hdiutil image.
+if DMG_APP_PATH="$APP" DMG_PACKAGING_DIR="$ROOT/packaging" python3 -m dmgbuild -s "$ROOT/packaging/dmg-settings.py" "$APP_NAME" "$DIST/$DMG_NAME" >/dev/null 2>&1; then
+  echo "styled installer window"
+else
+  warn "dmgbuild unavailable (pip install dmgbuild); building a plain DMG"
+  STAGING="$(mktemp -d)"
+  cp -R "$APP" "$STAGING/"
+  ln -s /Applications "$STAGING/Applications"
+  hdiutil create -volname "$APP_NAME" -srcfolder "$STAGING" -ov -format UDZO -quiet "$DIST/$DMG_NAME"
+  rm -rf "$STAGING"
+fi
 
 if [[ "$SIGNING_IDENTITY" != "-" ]]; then
   codesign --sign "$SIGNING_IDENTITY" --timestamp "$DIST/$DMG_NAME"
