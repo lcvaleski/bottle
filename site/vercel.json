@@ -4,7 +4,7 @@
   "redirects": [
     {
       "source": "/download",
-      "destination": "https://github.com/lcvaleski/bottle/releases/latest",
+      "destination": "https://github.com/lcvaleski/bottle/releases/latest/download/Bottle.dmg",
       "permanent": false
     },
     {

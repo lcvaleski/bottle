@@ -133,5 +133,10 @@ else
   warn "SPARKLE_PRIVATE_KEY_FILE not set; skipping appcast"
 fi
 
+# A stable filename so a download link never has to name a version:
+# https://github.com/<owner>/<repo>/releases/latest/download/Bottle.dmg
+# Created after the appcast so generate_appcast doesn't see it as a second update.
+cp "$DIST/$DMG_NAME" "$DIST/$APP_NAME.dmg"
+
 log "Done"
 ls -la "$DIST"
