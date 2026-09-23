@@ -130,6 +130,30 @@ struct BlockListView: View {
 
     private var appList: some View {
         List {
+            if !model.suggestions.isEmpty && model.mode == .block {
+                Section {
+                    ForEach(model.suggestions) { suggestionRow($0) }
+                } header: {
+                    HStack {
+                        ListSectionHeader(title: "Suggested", count: model.suggestions.count)
+                        Spacer()
+                        Button("Add All") { model.acceptAllSuggestions() }
+                            .controlSize(.small)
+                        Button {
+                            withAnimation { model.showSuggestions = false }
+                        } label: {
+                            Image(systemName: "xmark")
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.secondary)
+                        .help("Hide suggestions")
+                    }
+                } footer: {
+                    Text("Bottle can't see Screen Time — Apple doesn't share it. These are the apps people usually block, plus whatever sits in your dock and first Home Screen page.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
             if !model.chosenApps.isEmpty {
                 Section {
                     ForEach(model.chosenApps) { appRow($0) }
@@ -169,6 +193,31 @@ struct BlockListView: View {
         .listStyle(.inset)
         .animation(.snappy(duration: 0.22), value: model.selected)
         .animation(.default, value: model.search)
+    }
+
+    private func suggestionRow(_ suggestion: Suggestions.Suggestion) -> some View {
+        Button {
+            model.toggle(suggestion.app.bundleID)
+        } label: {
+            HStack(spacing: 11) {
+                AppIconView(image: model.iconCache.image(for: suggestion.app.bundleID), side: 32)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(suggestion.app.name).foregroundStyle(.primary)
+                    Text(suggestion.reason)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "plus.circle")
+                    .font(.system(size: 17))
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(.tint)
+            }
+            .padding(.vertical, 3)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help("Add \(suggestion.app.name) to the block list")
     }
 
     private func appRow(_ app: InstalledApp) -> some View {

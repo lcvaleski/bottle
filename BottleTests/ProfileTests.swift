@@ -151,3 +151,49 @@ struct LockProfileTests {
         #expect(r.bundleIDs == ["com.apple.MobileSMS"])
     }
 }
+
+struct SuggestionsTests {
+    /// Real `cfgutil get-icon-layout` output: dock first, then pages, folders nested.
+    private let layout = """
+    [
+      ["com.apple.mobilesafari", "com.apple.MobileSMS", "com.spotify.client", "com.google.Gmail"],
+      [["Folder", ["com.apple.TestFlight", "com.riverpage.app"]], "com.burbn.instagram"],
+      ["com.reddit.Reddit"]
+    ]
+    """
+
+    @Test func ranksDockAsZeroAndPagesInOrder() {
+        let ranks = Suggestions.homeScreenRanks(fromIconLayout: layout)
+        #expect(ranks["com.apple.mobilesafari"] == 0)
+        #expect(ranks["com.burbn.instagram"] == 1)
+        #expect(ranks["com.apple.TestFlight"] == 1, "apps inside folders belong to their page")
+        #expect(ranks["com.reddit.Reddit"] == 2)
+        #expect(ranks["Folder"] == nil)
+    }
+
+    @Test func malformedLayoutIsEmptyNotFatal() {
+        #expect(Suggestions.homeScreenRanks(fromIconLayout: "not json").isEmpty)
+    }
+
+    @Test func suggestsKnownDistractionsBeforeMerelyNearbyApps() {
+        let apps = [
+            InstalledApp(bundleID: "com.burbn.instagram", name: "Instagram", isBuiltIn: false),
+            InstalledApp(bundleID: "com.spotify.client", name: "Spotify", isBuiltIn: false),
+            InstalledApp(bundleID: "com.example.obscure", name: "Obscure", isBuiltIn: false),
+        ]
+        let ranks = ["com.spotify.client": 0, "com.burbn.instagram": 1, "com.example.obscure": 4]
+        let result = Suggestions.build(apps: apps, ranks: ranks, excluding: [])
+        #expect(result.map(\.app.bundleID) == ["com.burbn.instagram", "com.spotify.client"])
+        #expect(result.first?.reason == "On your first Home Screen page")
+        #expect(result.last?.reason == "In your dock")
+    }
+
+    @Test func alreadyChosenAndAppleAppsAreNotSuggested() {
+        let apps = [
+            InstalledApp(bundleID: "com.burbn.instagram", name: "Instagram", isBuiltIn: false),
+            InstalledApp(bundleID: "com.apple.mobilesafari", name: "Safari", isBuiltIn: true),
+        ]
+        let result = Suggestions.build(apps: apps, ranks: ["com.apple.mobilesafari": 0], excluding: ["com.burbn.instagram"])
+        #expect(result.isEmpty)
+    }
+}
