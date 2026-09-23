@@ -118,24 +118,6 @@ final class CfgUtil {
         return result
     }
 
-    /// Some commands (get-icon-layout) answer with a bare JSON array instead of
-    /// the usual CommandOutput envelope, so hand back stdout untouched.
-    func rawOutput(_ command: String, _ args: [String] = [], ecid: String? = nil, timeout: Int = 5) async throws -> String {
-        guard Self.isInstalled else { throw CfgUtilError.notInstalled }
-        await lock.acquire()
-        isBusy = true
-        defer { isBusy = false; lock.release() }
-
-        var argv = ["--format", "JSON", "--timeout", String(timeout)]
-        if let identity { argv += ["-C", identity.certificateURL.path, "-K", identity.privateKeyURL.path] }
-        if let ecid { argv += ["-e", ecid] }
-        argv.append(command)
-        argv += args
-
-        let output = try await ProcessRunner.run(Self.executableURL, arguments: argv)
-        return output.stdout
-    }
-
     nonisolated private static func redacted(_ argv: [String]) -> [String] {
         var out = argv
         for (index, arg) in argv.enumerated() where arg == "--password" && index + 1 < argv.count {

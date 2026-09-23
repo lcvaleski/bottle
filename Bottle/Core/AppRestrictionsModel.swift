@@ -40,8 +40,6 @@ final class AppRestrictionsModel {
     private(set) var appliedApps: Set<String> = []
     private(set) var appliedSites: [String] = []
 
-    /// Home Screen position per app, used to suggest what to block.
-    private(set) var homeScreenRanks: [String: Int] = [:]
     var showSuggestions = true
     private(set) var isLoading = false
     private(set) var isApplying = false
@@ -64,13 +62,13 @@ final class AppRestrictionsModel {
         return apps.filter { $0.name.lowercased().contains(query) || $0.bundleID.lowercased().contains(query) }
     }
 
-    var suggestions: [Suggestions.Suggestion] {
+    var suggestions: [InstalledApp] {
         guard showSuggestions else { return [] }
-        return Suggestions.build(apps: apps, ranks: homeScreenRanks, excluding: selected)
+        return Suggestions.build(apps: apps, excluding: selected)
     }
 
     func acceptAllSuggestions() {
-        for suggestion in suggestions { selected.insert(suggestion.app.bundleID) }
+        for app in suggestions { selected.insert(app.bundleID) }
     }
 
     /// Everything the user has picked or that is already live — the phone's
@@ -172,7 +170,6 @@ final class AppRestrictionsModel {
             selected = Demo.blockedApps
             sites = Demo.blockedSites
             mode = .block
-            homeScreenRanks = ["com.burbn.instagram": 0, "com.zhiliaoapp.musically": 1, "com.openai.chat": 0, "com.linkedin.LinkedIn": 1]
             return
         }
         guard !isLoading else { return }
@@ -211,11 +208,6 @@ final class AppRestrictionsModel {
         } catch {
             errorMessage = error.localizedDescription
             return
-        }
-
-        // Where things sit on the Home Screen tells us what to suggest.
-        if let layout = try? await cfgutil.rawOutput("get-icon-layout", ecid: ecid, timeout: 6) {
-            homeScreenRanks = Suggestions.homeScreenRanks(fromIconLayout: layout)
         }
 
         // Icons load after the list is on screen; rows fill in as batches land.

@@ -149,7 +149,7 @@ struct BlockListView: View {
                         .help("Hide suggestions")
                     }
                 } footer: {
-                    Text("Bottle can't see Screen Time — Apple doesn't share it. These are the apps people usually block, plus whatever sits in your dock and first Home Screen page.")
+                    Text("The apps people most often block, narrowed to the ones on this iPhone.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -195,18 +195,13 @@ struct BlockListView: View {
         .animation(.default, value: model.search)
     }
 
-    private func suggestionRow(_ suggestion: Suggestions.Suggestion) -> some View {
+    private func suggestionRow(_ app: InstalledApp) -> some View {
         Button {
-            model.toggle(suggestion.app.bundleID)
+            model.toggle(app.bundleID)
         } label: {
             HStack(spacing: 11) {
-                AppIconView(image: model.iconCache.image(for: suggestion.app.bundleID), side: 32)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(suggestion.app.name).foregroundStyle(.primary)
-                    Text(suggestion.reason)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                AppIconView(image: model.iconCache.image(for: app.bundleID), side: 32)
+                Text(app.name).foregroundStyle(.primary)
                 Spacer(minLength: 8)
                 Image(systemName: "plus.circle")
                     .font(.system(size: 17))
@@ -217,7 +212,7 @@ struct BlockListView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help("Add \(suggestion.app.name) to the block list")
+        .help("Add \(app.name) to the block list")
     }
 
     private func appRow(_ app: InstalledApp) -> some View {
