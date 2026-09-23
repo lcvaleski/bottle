@@ -9,7 +9,7 @@ struct BottleApp: App {
             ContentView()
                 .environment(model)
         }
-        .defaultSize(width: 960, height: 640)
+        .defaultSize(width: 1000, height: 700)
         .commands {
             CommandGroup(replacing: .newItem) {}
             CommandGroup(after: .appInfo) {

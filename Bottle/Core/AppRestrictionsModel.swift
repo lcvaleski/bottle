@@ -32,6 +32,13 @@ final class AppRestrictionsModel {
     private(set) var apps: [InstalledApp] = []
     private(set) var profiles: [InstalledProfile] = []
     private(set) var profileInstalled = false
+
+    /// What is actually live on the phone right now, as opposed to what the user
+    /// is editing. The phone never hands the payload back, so this is what Bottle
+    /// last successfully installed.
+    private(set) var appliedMode: RestrictionMode?
+    private(set) var appliedApps: Set<String> = []
+    private(set) var appliedSites: [String] = []
     private(set) var isLoading = false
     private(set) var isApplying = false
     private(set) var statusMessage: String?
@@ -53,8 +60,75 @@ final class AppRestrictionsModel {
         return apps.filter { $0.name.lowercased().contains(query) || $0.bundleID.lowercased().contains(query) }
     }
 
-    var builtInApps: [InstalledApp] { filteredApps.filter(\.isBuiltIn) }
-    var thirdPartyApps: [InstalledApp] { filteredApps.filter { !$0.isBuiltIn } }
+    /// Everything the user has picked or that is already live — the phone's
+    /// current state, pulled to the top of the list so it's never hunted for.
+    var chosenApps: [InstalledApp] {
+        filteredApps.filter { state(of: $0.bundleID) != .off }
+    }
+
+    var builtInApps: [InstalledApp] {
+        filteredApps.filter { $0.isBuiltIn && state(of: $0.bundleID) == .off }
+    }
+
+    var thirdPartyApps: [InstalledApp] {
+        filteredApps.filter { !$0.isBuiltIn && state(of: $0.bundleID) == .off }
+    }
+
+    // MARK: - Live vs. edited
+
+    var isActive: Bool { profileInstalled && appliedMode != nil }
+
+    /// Apps the user has ticked that aren't live yet.
+    var pendingAdditions: Set<String> { selected.subtracting(appliedApps) }
+    /// Apps that are live but the user has unticked.
+    var pendingRemovals: Set<String> { appliedApps.subtracting(selected) }
+    var pendingSiteAdditions: [String] { sites.filter { !appliedSites.contains($0) } }
+    var pendingSiteRemovals: [String] { appliedSites.filter { !sites.contains($0) } }
+
+    var hasPendingChanges: Bool {
+        guard isActive else { return !selected.isEmpty || !sites.isEmpty }
+        return !pendingAdditions.isEmpty || !pendingRemovals.isEmpty
+            || !pendingSiteAdditions.isEmpty || !pendingSiteRemovals.isEmpty
+            || appliedMode != mode
+    }
+
+    /// Where an app stands: live, about to change, or untouched.
+    enum RowState { case off, on, willTurnOn, willTurnOff }
+
+    func state(of bundleID: String) -> RowState {
+        let live = isActive && appliedApps.contains(bundleID)
+        let picked = selected.contains(bundleID)
+        switch (live, picked) {
+        case (true, true): return .on
+        case (false, false): return .off
+        case (false, true): return .willTurnOn
+        case (true, false): return .willTurnOff
+        }
+    }
+
+    func siteState(of host: String) -> RowState {
+        let live = isActive && appliedSites.contains(host)
+        let picked = sites.contains(host)
+        switch (live, picked) {
+        case (true, true): return .on
+        case (false, false): return .off
+        case (false, true): return .willTurnOn
+        case (true, false): return .willTurnOff
+        }
+    }
+
+    /// Throw away edits and go back to what the phone actually has.
+    func revert() {
+        selected = appliedApps
+        sites = appliedSites
+        if let appliedMode { mode = appliedMode }
+        statusMessage = nil
+        errorMessage = nil
+    }
+
+    func toggle(_ bundleID: String) {
+        if selected.contains(bundleID) { selected.remove(bundleID) } else { selected.insert(bundleID) }
+    }
 
     /// Profiles on the phone that Bottle didn't install.
     var otherProfiles: [InstalledProfile] { profiles.filter { !$0.isBottle } }
@@ -75,6 +149,18 @@ final class AppRestrictionsModel {
     }
 
     func load() async {
+        if Demo.isOn {
+            apps = Demo.apps.sorted { ($0.isBuiltIn ? 0 : 1, $0.name.lowercased()) < ($1.isBuiltIn ? 0 : 1, $1.name.lowercased()) }
+            profiles = [Demo.otherProfile, InstalledProfile(identifier: RestrictionsProfile.identifier, displayName: "Bottle App Restrictions")]
+            profileInstalled = true
+            appliedMode = .block
+            appliedApps = Demo.blockedApps
+            appliedSites = Demo.blockedSites
+            selected = Demo.blockedApps
+            sites = Demo.blockedSites
+            mode = .block
+            return
+        }
         guard !isLoading else { return }
         isLoading = true
         errorMessage = nil
@@ -102,6 +188,12 @@ final class AppRestrictionsModel {
                 return resolved
             }
             profileInstalled = profiles.contains { $0.isBottle }
+            if !profileInstalled {
+                appliedMode = nil
+                appliedApps = []
+                appliedSites = []
+            }
+            persistApplied()
         } catch {
             errorMessage = error.localizedDescription
             return
@@ -142,6 +234,9 @@ final class AppRestrictionsModel {
                 try await cfgutil.run("remove-profile", [legacy.identifier], ecid: ecid, timeout: 10)
             }
             profileInstalled = true
+            appliedMode = mode
+            appliedApps = selected
+            appliedSites = sites
             profiles.removeAll { $0.isBottle }
             profiles.append(InstalledProfile(
                 identifier: RestrictionsProfile.identifier,
@@ -197,6 +292,11 @@ final class AppRestrictionsModel {
                 try await cfgutil.run("remove-profile", [profile.identifier], ecid: ecid, timeout: 10)
             }
             profileInstalled = false
+            appliedMode = nil
+            appliedApps = []
+            appliedSites = []
+            selected = []
+            sites = []
             profiles.removeAll { $0.isBottle }
             statusMessage = "Restrictions removed. All apps are visible again."
         } catch {
@@ -235,9 +335,14 @@ final class AppRestrictionsModel {
 
     // MARK: - Persistence (the phone doesn't hand the payload back, so remember what we sent)
 
+    private func persistApplied() { persistSelection() }
+
     private func persistSelection() {
         UserDefaults.standard.set(
-            ["mode": mode.rawValue, "selected": Array(selected), "locked": lockedOnPhone, "sites": sites] as [String: Any],
+            [
+                "mode": mode.rawValue, "selected": Array(selected), "locked": lockedOnPhone, "sites": sites,
+                "appliedMode": appliedMode?.rawValue ?? "", "appliedApps": Array(appliedApps), "appliedSites": appliedSites,
+            ] as [String: Any],
             forKey: storageKey
         )
     }
@@ -256,5 +361,10 @@ final class AppRestrictionsModel {
         if let savedSites = saved["sites"] as? [String] {
             sites = savedSites
         }
+        if let raw = saved["appliedMode"] as? String, let m = RestrictionMode(rawValue: raw) {
+            appliedMode = m
+        }
+        if let ids = saved["appliedApps"] as? [String] { appliedApps = Set(ids) }
+        if let hosts = saved["appliedSites"] as? [String] { appliedSites = hosts }
     }
 }

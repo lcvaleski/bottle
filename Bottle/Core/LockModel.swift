@@ -27,6 +27,19 @@ final class LockModel {
         self.cfgutil = cfgutil
         self.identityStore = identityStore
         record = LockRecord.load()
+        if Demo.screen == "locked" {
+            record = LockRecord(
+                id: "demolockid0000000000", token: "demo", statusURL: "https://corephone.org/l/demolockid0000000000#demo",
+                approverURL: nil, delayHours: 24, createdAt: Date(), deviceUDID: Demo.device.udid, deviceName: Demo.device.displayName
+            )
+            status = LockService.LockStatus(
+                id: "demolockid0000000000", state: "unlocking", delayHours: 24,
+                createdAt: Date().timeIntervalSince1970 * 1000,
+                unlockRequestedAt: Date().timeIntervalSince1970 * 1000,
+                unlockAt: Date().addingTimeInterval(6 * 3600 + 132).timeIntervalSince1970 * 1000,
+                releasedAt: nil, hasIdentity: true, hasApprover: false, password: nil, identity: nil
+            )
+        }
     }
 
     var isLocked: Bool { record != nil }
@@ -90,7 +103,7 @@ final class LockModel {
     // MARK: - While locked
 
     func refresh() async {
-        guard let record else { return }
+        guard let record, !Demo.isOn else { return }
         do {
             status = try await service.status(id: record.id, token: record.token)
             errorMessage = nil

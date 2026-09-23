@@ -21,7 +21,7 @@ final class AppModel {
         monitor = DeviceMonitor(cfgutil: cfgutil)
         iconCache = IconCache(cfgutil: cfgutil)
         lock = LockModel(cfgutil: cfgutil, identityStore: identityStore)
-        if lock.isLocked { lock.startPolling() }
+        if lock.isLocked && !Demo.isOn { lock.startPolling() }
     }
 
     func adoptIdentity(_ identity: SupervisionIdentity) {

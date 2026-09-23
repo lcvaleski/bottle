@@ -1,5 +1,7 @@
 import SwiftUI
 
+/// The erase-and-set-up flow. Two faces: a checklist before it starts, and a
+/// progress list once it's running.
 struct SupervisionWizardView: View {
     @Environment(AppModel.self) private var model
     @Bindable var wizard: SupervisionWizard
@@ -8,166 +10,258 @@ struct SupervisionWizardView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                if !wizard.hasStarted {
-                    preflight
+            VStack(alignment: .leading, spacing: 22) {
+                heading
+                if wizard.hasStarted {
+                    progress
+                } else {
+                    checklist
+                    options
                 }
-                steps
-                controls
+                if let failure = wizard.failure, wizard.failedStep != nil {
+                    NoticeBanner(tone: .danger, title: "Stopped at “\(wizard.failedStep?.title ?? "")”",
+                                 detail: failure, actionTitle: "Show Log") { model.showLog = true }
+                }
             }
-            .padding(20)
+            .padding(28)
             .frame(maxWidth: 620, alignment: .leading)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .safeAreaInset(edge: .bottom) { controls }
         .confirmationDialog(
-            "Erase “\(wizard.deviceName)”?",
+            wizard.skipBackup ? "Erase \(wizard.deviceName) without a backup?" : "Back up and erase \(wizard.deviceName)?",
             isPresented: $confirmErase,
             titleVisibility: .visible
         ) {
-            Button("Back Up, Erase, and Supervise", role: .destructive) { wizard.start() }
+            Button(wizard.skipBackup ? "Erase and Set Up" : "Back Up, Erase, and Set Up", role: .destructive) {
+                wizard.start()
+            }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text(wizard.skipBackup
-                 ? "Everything on the iPhone will be deleted and it will be set up as new."
-                 : "The iPhone will be backed up to this Mac, erased, supervised, and restored from that backup.")
+                 ? "Everything on the iPhone is deleted and it starts fresh. There's no undo."
+                 : "Bottle copies the iPhone to this Mac, erases it, sets it up, and puts everything back. Keep it plugged in the whole time.")
         }
     }
 
-    // MARK: - Preflight
+    private var heading: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(wizard.hasStarted ? "Setting up \(wizard.deviceName)" : "Ready when you are")
+                .font(.largeTitle.weight(.semibold))
+            Text(wizard.hasStarted
+                 ? "Leave the iPhone plugged in. It will restart on its own — that's expected."
+                 : "Three quick checks, then Bottle takes over for about an hour.")
+                .foregroundStyle(.secondary)
+        }
+    }
 
-    private var preflight: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            GroupBox("Before you start") {
-                VStack(alignment: .leading, spacing: 10) {
-                    Toggle(isOn: $wizard.confirmedFindMyOff) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Find My iPhone is turned off")
-                            Text("Settings → your name → Find My → Find My iPhone. The erase fails if Activation Lock is on.")
-                                .font(.caption).foregroundStyle(.secondary)
-                        }
-                    }
-                    Toggle(isOn: $wizard.confirmedTrusted) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("The iPhone is unlocked and trusts this Mac")
-                            Text("Keep it unlocked while the backup runs.")
-                                .font(.caption).foregroundStyle(.secondary)
-                        }
-                    }
-                    Toggle(isOn: $wizard.confirmedErase) {
-                        Text("I understand the iPhone will be erased")
-                    }
-                }
-                .padding(.vertical, 4)
+    // MARK: Before
+
+    private var checklist: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            ListSectionHeader(title: "Check these first")
+            VStack(spacing: 0) {
+                CheckRow(isOn: $wizard.confirmedFindMyOff,
+                         title: "Find My iPhone is off",
+                         detail: "Settings → your name → Find My → Find My iPhone. The erase fails if it's on.")
+                Divider().padding(.leading, 40)
+                CheckRow(isOn: $wizard.confirmedTrusted,
+                         title: "The iPhone is unlocked and trusts this Mac",
+                         detail: "Keep it unlocked while the backup runs.")
+                Divider().padding(.leading, 40)
+                CheckRow(isOn: $wizard.confirmedErase,
+                         title: "I know the iPhone will be erased",
+                         detail: wizard.skipBackup ? "Nothing will be restored afterwards." : "Bottle restores it from the backup it makes first.")
             }
+            .background(.quaternary.opacity(0.28), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+        }
+    }
 
-            GroupBox("Options") {
-                VStack(alignment: .leading, spacing: 10) {
-                    LabeledContent("Organization name") {
-                        TextField("Shown on the iPhone as the supervising organization", text: $wizard.organizationName)
-                            .textFieldStyle(.roundedBorder)
-                            .disabled(model.identityStore.identity != nil)
-                    }
-                    if model.identityStore.identity != nil {
-                        Text("A supervision identity already exists on this Mac, so the name is fixed.")
+    private var options: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            ListSectionHeader(title: "Options")
+            VStack(spacing: 0) {
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Organization name")
+                        Text("The iPhone shows this in Settings as the organization managing it.")
                             .font(.caption).foregroundStyle(.secondary)
                     }
-
-                    Toggle("Skip backup — set the iPhone up as new", isOn: $wizard.skipBackup)
-
-                    if !wizard.skipBackup {
-                        LabeledContent("Backup password") {
-                            SecureField("Only if encrypted backups are on", text: $wizard.backupPassword)
-                                .textFieldStyle(.roundedBorder)
-                        }
-                        if device.backupWillBeEncrypted == true {
-                            Text("This iPhone uses encrypted backups. Enter the password you set in Finder or the restore step will fail.")
-                                .font(.caption).foregroundStyle(.orange)
-                        }
-                    }
+                    Spacer()
+                    TextField("", text: $wizard.organizationName)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 170)
+                        .disabled(model.identityStore.identity != nil)
                 }
-                .padding(.vertical, 4)
-            }
-        }
-    }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
 
-    // MARK: - Steps
+                Divider().padding(.leading, 14)
 
-    private var steps: some View {
-        GroupBox("Steps") {
-            VStack(alignment: .leading, spacing: 0) {
-                ForEach(wizard.steps) { step in
-                    HStack(alignment: .top, spacing: 10) {
-                        statusIcon(step.status)
-                            .frame(width: 18)
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Start fresh instead of restoring")
+                        Text("Skips the backup. Use this for a spare or a kid's phone.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Toggle("", isOn: $wizard.skipBackup)
+                        .toggleStyle(.switch)
+                        .labelsHidden()
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+
+                if !wizard.skipBackup {
+                    Divider().padding(.leading, 14)
+                    HStack(spacing: 12) {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(step.title)
-                                .foregroundStyle(step.status == .pending ? .secondary : .primary)
-                            if !step.detail.isEmpty {
-                                Text(step.detail)
-                                    .font(.caption)
-                                    .foregroundStyle(step.status == .failed ? .red : .secondary)
-                                    .textSelection(.enabled)
-                            }
+                            Text("Backup password")
+                            Text(device.backupWillBeEncrypted == true
+                                 ? "This iPhone uses encrypted backups — the password is required."
+                                 : "Only needed if you turned on encrypted backups in Finder.")
+                                .font(.caption)
+                                .foregroundStyle(device.backupWillBeEncrypted == true ? .orange : .secondary)
                         }
                         Spacer()
+                        SecureField("", text: $wizard.backupPassword)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 170)
                     }
-                    .padding(.vertical, 6)
-                    if step.id != SupervisionWizard.StepID.allCases.last {
-                        Divider()
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
+                }
+            }
+            .background(.quaternary.opacity(0.28), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+        }
+    }
+
+    // MARK: During
+
+    private var progress: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            ListSectionHeader(title: "Progress")
+            VStack(spacing: 0) {
+                ForEach(Array(wizard.steps.enumerated()), id: \.element.id) { index, step in
+                    StepRow(step: step)
+                    if index < wizard.steps.count - 1 {
+                        Divider().padding(.leading, 42)
                     }
                 }
             }
-            .padding(.vertical, 4)
+            .background(.quaternary.opacity(0.28), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
         }
     }
 
-    @ViewBuilder
-    private func statusIcon(_ status: SupervisionWizard.Status) -> some View {
-        switch status {
-        case .pending:
-            Image(systemName: "circle").foregroundStyle(.tertiary)
-        case .running:
-            ProgressView().controlSize(.small)
-        case .done:
-            Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-        case .skipped:
-            Image(systemName: "minus.circle").foregroundStyle(.secondary)
-        case .failed:
-            Image(systemName: "xmark.circle.fill").foregroundStyle(.red)
-        }
-    }
+    // MARK: Controls
 
-    // MARK: - Controls
-
-    @ViewBuilder
     private var controls: some View {
-        HStack {
+        HStack(spacing: 12) {
             if wizard.isComplete {
-                Label("Done. Finish Setup Assistant on the iPhone, then manage its apps here.", systemImage: "checkmark.seal")
+                Label("Done — finish the setup screens on the iPhone", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
                 Spacer()
-                Button("Continue") { model.endWizard(for: wizard.ecid) }
+                Button("Start Blocking") { model.endWizard(for: wizard.ecid) }
                     .buttonStyle(.borderedProminent)
             } else if wizard.isRunning {
-                Text("Don't unplug the iPhone.")
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 8) {
+                    ProgressView().controlSize(.small)
+                    Text("Don't unplug the iPhone").foregroundStyle(.secondary)
+                }
                 Spacer()
-                Button("Cancel", role: .cancel) { wizard.cancel() }
+                Button("Stop", role: .cancel) { wizard.cancel() }
             } else if wizard.failedStep != nil {
-                Text(wizard.failure ?? "Failed")
-                    .foregroundStyle(.red)
-                    .lineLimit(3)
                 Spacer()
                 Button("Close") { model.endWizard(for: wizard.ecid) }
-                Button("Retry Step") { wizard.retry() }
+                Button("Try That Step Again") { wizard.retry() }
                     .buttonStyle(.borderedProminent)
             } else {
+                Text(wizard.canStart ? "About an hour, mostly waiting." : "Tick all three checks to continue.")
+                    .foregroundStyle(.secondary)
                 Spacer()
                 Button("Cancel") { model.endWizard(for: wizard.ecid) }
-                Button("Start") { confirmErase = true }
+                Button("Begin") { confirmErase = true }
                     .buttonStyle(.borderedProminent)
                     .disabled(!wizard.canStart)
             }
+        }
+        .bottomBar()
+    }
+}
+
+struct CheckRow: View {
+    @Binding var isOn: Bool
+    let title: String
+    let detail: String
+
+    var body: some View {
+        Button {
+            isOn.toggle()
+        } label: {
+            HStack(alignment: .firstTextBaseline, spacing: 11) {
+                Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 17))
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(isOn ? AnyShapeStyle(Color.green) : AnyShapeStyle(.tertiary))
+                    .contentTransition(.symbolEffect(.replace))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title).foregroundStyle(.primary)
+                    Text(detail)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .animation(.snappy(duration: 0.18), value: isOn)
+    }
+}
+
+struct StepRow: View {
+    let step: SupervisionWizard.Step
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 11) {
+            icon
+                .frame(width: 17)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(step.title)
+                    .foregroundStyle(step.status == .pending ? .secondary : .primary)
+                    .fontWeight(step.status == .running ? .medium : .regular)
+                if !step.detail.isEmpty {
+                    Text(step.detail)
+                        .font(.callout)
+                        .foregroundStyle(step.status == .failed ? .red : .secondary)
+                        .textSelection(.enabled)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+    }
+
+    @ViewBuilder
+    private var icon: some View {
+        switch step.status {
+        case .pending:
+            Image(systemName: "circle.dotted").foregroundStyle(.tertiary)
+        case .running:
+            ProgressView().controlSize(.small)
+        case .done:
+            Image(systemName: "checkmark.circle.fill")
+                .symbolRenderingMode(.hierarchical).foregroundStyle(.green)
+        case .skipped:
+            Image(systemName: "minus.circle").foregroundStyle(.secondary)
+        case .failed:
+            Image(systemName: "exclamationmark.circle.fill")
+                .symbolRenderingMode(.hierarchical).foregroundStyle(.red)
         }
     }
 }

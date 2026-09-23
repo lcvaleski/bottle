@@ -1,156 +1,130 @@
 import SwiftUI
 
+/// Routes a connected phone to the right screen: set it up, fix the key, or block things.
 struct DeviceView: View {
     @Environment(AppModel.self) private var model
     let device: Device
     @State private var showIdentitySetup = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            DeviceHeaderView(device: device)
-            Divider()
-            if model.lock.isLocked {
-                LockedView(device: device)
-            } else if let wizard = model.wizard(for: device) {
-                SupervisionWizardView(wizard: wizard, device: device)
-            } else if device.isSupervised == true {
-                if model.identityStore.identity == nil || showIdentitySetup {
-                    IdentitySetupView(device: device) { showIdentitySetup = false }
-                } else {
+        if let wizard = model.wizard(for: device) {
+            SupervisionWizardView(wizard: wizard, device: device)
+        } else if device.isSupervised == true {
+            if model.identityStore.identity == nil || showIdentitySetup {
+                IdentitySetupView(device: device) { showIdentitySetup = false }
+            } else {
+                VStack(spacing: 0) {
                     if let identity = model.identityStore.identity,
                        let org = device.organizationName, org != identity.organizationName {
-                        identityMismatchBanner(identity: identity, phoneOrg: org)
-                        Divider()
+                        NoticeBanner(
+                            tone: .warning,
+                            title: "This iPhone answers to a different computer",
+                            detail: "It's managed by “\(org)”, but this Mac holds the key for “\(identity.organizationName)”. Changes will probably be refused.",
+                            actionTitle: "Fix…"
+                        ) { showIdentitySetup = true }
+                        .padding([.horizontal, .top], 16)
                     }
-                    AppRestrictionsView(model: model.restrictions(for: device), device: device)
+                    BlockListView(model: model.restrictions(for: device), device: device)
                 }
-            } else {
-                SupervisionIntroView(device: device)
             }
+        } else {
+            SetUpIntroView(device: device)
         }
-    }
-
-    private func identityMismatchBanner(identity: SupervisionIdentity, phoneOrg: String) -> some View {
-        HStack {
-            Label("Bottle's identity is for “\(identity.organizationName)” but this iPhone is supervised by “\(phoneOrg)”. Changes will probably be refused.", systemImage: "exclamationmark.triangle.fill")
-                .foregroundStyle(.orange)
-            Spacer()
-            Button("Change Identity…") { showIdentitySetup = true }
-        }
-        .font(.callout)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(.orange.opacity(0.08))
     }
 }
 
-struct DeviceHeaderView: View {
-    let device: Device
-
-    var body: some View {
-        HStack(spacing: 14) {
-            Image(systemName: device.family == "iPad" ? "ipad" : "iphone")
-                .font(.system(size: 34))
-                .foregroundStyle(.secondary)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(device.displayName)
-                    .font(.title2.weight(.semibold))
-                HStack(spacing: 8) {
-                    if let productVersion = device.productVersion { Text("iOS \(productVersion)") }
-                    if !device.deviceType.isEmpty { Text(device.deviceType) }
-                    if let battery = device.batteryLevel { Text("\(battery)%") }
-                }
-                .font(.callout)
-                .foregroundStyle(.secondary)
-            }
-            Spacer()
-            VStack(alignment: .trailing, spacing: 4) {
-                if let supervised = device.isSupervised {
-                    Badge(
-                        text: supervised ? "Supervised" + (device.organizationName.map { " · \($0)" } ?? "") : "Not supervised",
-                        color: supervised ? .green : .orange
-                    )
-                }
-                if device.isPaired == false {
-                    Badge(text: "Not trusted — unlock and tap Trust", color: .red)
-                }
-            }
-        }
-        .padding(16)
-    }
-}
-
-struct Badge: View {
-    let text: String
-    let color: Color
-
-    var body: some View {
-        Text(text)
-            .font(.caption.weight(.medium))
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(color.opacity(0.15), in: Capsule())
-            .foregroundStyle(color)
-    }
-}
-
-struct SupervisionIntroView: View {
+/// First run for an unsupervised phone. Explains the erase honestly and up front.
+struct SetUpIntroView: View {
     @Environment(AppModel.self) private var model
     let device: Device
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            HStack(spacing: 8) {
-                Text("This iPhone isn't supervised yet")
-                    .font(.title3.weight(.semibold))
-                Badge(text: "Experimental", color: .orange)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Set up \(device.displayName)")
+                        .font(.largeTitle.weight(.semibold))
+                    Text("Apple only lets a Mac block apps on an iPhone the Mac set up itself. That setup happens during the phone's first-run screens, so the phone has to be erased once. After that, blocking and unblocking take seconds.")
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                VStack(spacing: 10) {
+                    StepCard(number: 1, title: "Bottle backs up your iPhone",
+                             detail: "To this Mac, the same way Finder does.",
+                             symbol: "externaldrive.fill.badge.timemachine")
+                    StepCard(number: 2, title: "Your iPhone erases and restarts",
+                             detail: "This is the part Apple requires. It takes a few minutes.",
+                             symbol: "arrow.trianglehead.2.clockwise")
+                    StepCard(number: 3, title: "Bottle puts everything back",
+                             detail: "Apps, photos, messages and settings, from the backup it just made.",
+                             symbol: "checkmark.seal.fill")
+                }
+
+                NoticeBanner(
+                    tone: .warning,
+                    title: "Still being tested",
+                    detail: "This setup has worked in testing but on few phones so far. If it stops partway, Apple Configurator can finish it — the phone is never left somewhere it can't be recovered from. Make an iCloud backup first anyway."
+                )
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Button {
+                        model.startWizard(for: device)
+                    } label: {
+                        Text("Get Started")
+                            .frame(minWidth: 120)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .disabled(device.isPaired == false)
+
+                    if device.isPaired == false {
+                        Label("Unlock the iPhone and tap Trust first.", systemImage: "hand.raised.fill")
+                            .font(.callout)
+                            .foregroundStyle(.red)
+                    } else {
+                        Text("Set aside about an hour, mostly waiting. Keep the phone plugged in.")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
-
-            Label {
-                Text("The supervision wizard hasn't been tested on enough phones yet. If it fails partway, Apple Configurator can finish the job — the phone is never left in a state Configurator can't recover. Keep the activity log (⌘⇧L) open and report what happened.")
-            } icon: {
-                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
-            }
-            .font(.callout)
-            .padding(12)
-            .background(.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
-
-            Text("Supervision lets Bottle hide or allow-list apps on the phone. Apple only permits it on a freshly erased device, so Bottle will:")
-
-            VStack(alignment: .leading, spacing: 8) {
-                bullet("1", "Back up the iPhone to this Mac")
-                bullet("2", "Erase it and mark it as supervised")
-                bullet("3", "Put the backup back — apps, photos, and settings included")
-            }
-
-            Text("Plan for 20–60 minutes depending on how much is on the phone. Keep it plugged in the whole time.")
-                .foregroundStyle(.secondary)
-
-            Button("Set Up Supervision…") {
-                model.startWizard(for: device)
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(device.isPaired == false)
-
-            if device.isPaired == false {
-                Text("Unlock the iPhone and tap Trust before continuing.")
-                    .font(.callout)
-                    .foregroundStyle(.red)
-            }
-            Spacer()
+            .padding(28)
+            .frame(maxWidth: 620, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(20)
-        .frame(maxWidth: 560, alignment: .leading)
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
+}
 
-    private func bullet(_ number: String, _ text: String) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 10) {
-            Text(number)
-                .font(.caption.weight(.bold))
+struct StepCard: View {
+    let number: Int
+    let title: String
+    let detail: String
+    let symbol: String
+
+    var body: some View {
+        HStack(spacing: 13) {
+            Image(systemName: symbol)
+                .font(.system(size: 21))
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(.tint)
+                .frame(width: 30)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).fontWeight(.medium)
+                Text(detail)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+            Text("\(number)")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
                 .frame(width: 20, height: 20)
-                .background(Color.accentColor.opacity(0.15), in: Circle())
-            Text(text)
+                .background(.quaternary, in: Circle())
         }
+        .padding(13)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.quaternary.opacity(0.28), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
     }
 }

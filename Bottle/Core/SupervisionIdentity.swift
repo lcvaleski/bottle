@@ -39,6 +39,14 @@ final class SupervisionIdentityStore {
     private(set) var identity: SupervisionIdentity?
 
     init() {
+        if Demo.isOn {
+            identity = SupervisionIdentity(
+                certificateURL: Self.directory.appendingPathComponent("demo-cert.der"),
+                privateKeyURL: Self.directory.appendingPathComponent("demo-key.der"),
+                organizationName: "Coventry Labs, LLC"
+            )
+            return
+        }
         identity = Self.load()
     }
 
