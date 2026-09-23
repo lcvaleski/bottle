@@ -60,6 +60,23 @@ grep -E "warning: .*\.swift|BUILD SUCCEEDED" "$BUILD_LOG" || true
 APP="$DERIVED/Build/Products/Release/$APP_NAME.app"
 [[ -d "$APP" ]] || { echo "build failed: $APP missing" >&2; exit 1; }
 
+# Xcode leaves Sparkle's nested helpers signed by the Sparkle project, which
+# notarization rejects. Re-sign them inside-out with our identity, then the
+# framework, then the app itself.
+if [[ "$SIGNING_IDENTITY" != "-" ]]; then
+  log "Re-signing nested Sparkle components"
+  SPARKLE_FW="$APP/Contents/Frameworks/Sparkle.framework"
+  if [[ -d "$SPARKLE_FW" ]]; then
+    sign() { codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$@"; }
+    V="$SPARKLE_FW/Versions/Current"
+    for xpc in "$V/XPCServices"/*.xpc; do [[ -e "$xpc" ]] && sign "$xpc"; done
+    [[ -e "$V/Updater.app" ]] && sign "$V/Updater.app"
+    [[ -e "$V/Autoupdate" ]] && sign "$V/Autoupdate"
+    sign "$SPARKLE_FW"
+    sign --entitlements "$ROOT/$APP_NAME/$APP_NAME.entitlements" "$APP"
+  fi
+fi
+
 log "Verifying signature"
 codesign --verify --deep --strict --verbose=2 "$APP"
 
@@ -107,7 +124,7 @@ fi
 
 if [[ -n "${SPARKLE_PRIVATE_KEY_FILE:-}" ]]; then
   log "Generating Sparkle appcast"
-  SPARKLE_BIN="$(find "$DERIVED/SourcePackages/artifacts" -type f -name generate_appcast -exec dirname {} ; | head -1)"
+  SPARKLE_BIN="$(dirname "$(find "$DERIVED/SourcePackages/artifacts" -type f -name generate_appcast | head -1)")"
   [[ -n "$SPARKLE_BIN" ]] || { echo "Sparkle tools not found under $DERIVED/SourcePackages" >&2; exit 1; }
   "$SPARKLE_BIN/generate_appcast" --ed-key-file "$SPARKLE_PRIVATE_KEY_FILE" \
     ${DOWNLOAD_URL_PREFIX:+--download-url-prefix "$DOWNLOAD_URL_PREFIX"} \
