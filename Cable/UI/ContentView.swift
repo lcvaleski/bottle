@@ -9,6 +9,7 @@ struct ContentView: View {
     var body: some View {
         VStack(spacing: 0) {
             DetailView()
+                .frame(maxWidth: 760)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             if model.showLog {
                 Divider()
@@ -140,10 +141,10 @@ struct WindowConfigurator: NSViewRepresentable {
         let view = NSView()
         DispatchQueue.main.async {
             guard let window = view.window else { return }
-            window.minSize = NSSize(width: 720, height: 520)
+            window.minSize = NSSize(width: 600, height: 460)
             window.setFrameAutosaveName("CableMainWindow")
             if !window.setFrameUsingName("CableMainWindow") {
-                window.setContentSize(NSSize(width: 940, height: 660))
+                window.setContentSize(NSSize(width: 660, height: 700))
                 window.center()
             }
         }

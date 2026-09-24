@@ -66,7 +66,7 @@ struct BlockListView: View {
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()
-                .frame(width: 210)
+                .frame(width: 170)
 
                 Spacer()
 
@@ -75,12 +75,12 @@ struct BlockListView: View {
                     Text("Allow only what I pick").tag(RestrictionMode.allow)
                 }
                 .labelsHidden()
-                .frame(width: 190)
+                .frame(width: 178)
                 .help(model.mode.explanation)
 
                 if tab == .apps {
                     SearchField(text: $model.search)
-                        .frame(width: 200)
+                        .frame(minWidth: 130, maxWidth: 200)
                 }
             }
 
@@ -200,7 +200,7 @@ struct BlockListView: View {
             model.toggle(app.bundleID)
         } label: {
             HStack(spacing: 11) {
-                AppIconView(image: model.iconCache.image(for: app.bundleID), side: 32)
+                AppIconView(image: model.iconCache.image(for: app.bundleID), side: 36)
                 Text(app.name).foregroundStyle(.primary)
                 Spacer(minLength: 8)
                 Image(systemName: "plus.circle")
@@ -208,7 +208,7 @@ struct BlockListView: View {
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(.tint)
             }
-            .padding(.vertical, 3)
+            .padding(.vertical, 5)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -221,8 +221,8 @@ struct BlockListView: View {
         return Button {
             model.toggle(app.bundleID)
         } label: {
-            HStack(spacing: 11) {
-                AppIconView(image: model.iconCache.image(for: app.bundleID), side: 32,
+            HStack(spacing: 12) {
+                AppIconView(image: model.iconCache.image(for: app.bundleID), side: 36,
                             isBlocked: model.mode == .block && (state == .on))
                 VStack(alignment: .leading, spacing: 1) {
                     Text(app.name)
@@ -236,7 +236,7 @@ struct BlockListView: View {
                 Spacer(minLength: 8)
                 BlockToggle(state: state, blockingVerb: model.mode == .block)
             }
-            .padding(.vertical, 3)
+            .padding(.vertical, 5)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
