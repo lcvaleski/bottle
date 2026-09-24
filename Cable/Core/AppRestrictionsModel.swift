@@ -370,9 +370,9 @@ final class AppRestrictionsModel {
             saved = carried
         }
         guard let saved else { return }
-        if let raw = saved["mode"] as? String, let savedMode = RestrictionMode(rawValue: raw) {
-            mode = savedMode
-        }
+        // Allow-only mode has no interface for now, so never restore into it —
+        // there would be no way back out. The profile builder still supports it.
+        mode = .block
         if let ids = saved["selected"] as? [String] {
             selected = Set(ids)
         }

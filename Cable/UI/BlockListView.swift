@@ -70,14 +70,6 @@ struct BlockListView: View {
 
                 Spacer()
 
-                Picker("", selection: $model.mode) {
-                    Text("Block what I pick").tag(RestrictionMode.block)
-                    Text("Allow only what I pick").tag(RestrictionMode.allow)
-                }
-                .labelsHidden()
-                .frame(width: 178)
-                .help(model.mode.explanation)
-
                 if tab == .apps {
                     SearchField(text: $model.search)
                         .frame(minWidth: 130, maxWidth: 200)
@@ -100,12 +92,6 @@ struct BlockListView: View {
                 title: "Anyone with this Mac can undo this in one click",
                 actionTitle: "Lock…"
             ) { showLockSheet = true }
-        } else if model.mode == .allow {
-            NoticeBanner(
-                tone: .warning,
-                title: "Allow-only mode hides everything you don't pick",
-                detail: "Phone, Messages and Settings always stay. Pick every app you still want to see."
-            )
         }
     }
 
@@ -128,119 +114,109 @@ struct BlockListView: View {
         }
     }
 
+    /// Icons in rows rather than a vertical list of names: recognising an app
+    /// by its icon is faster than reading it, and it uses the width.
     private var appList: some View {
-        List {
-            if !model.suggestions.isEmpty && model.mode == .block {
-                Section {
-                    ForEach(model.suggestions) { suggestionRow($0) }
-                } header: {
-                    HStack {
-                        ListSectionHeader(title: "Suggested", count: model.suggestions.count)
-                        Spacer()
-                        Button("Add All") { model.acceptAllSuggestions() }
-                            .controlSize(.small)
-                        Button {
-                            withAnimation { model.showSuggestions = false }
-                        } label: {
-                            Image(systemName: "xmark")
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                if !model.suggestions.isEmpty && model.mode == .block {
+                    gridSection(
+                        title: "Suggested",
+                        count: model.suggestions.count,
+                        apps: model.suggestions,
+                        footer: "The apps people most often block, narrowed to the ones on this iPhone."
+                    ) {
+                        HStack(spacing: 6) {
+                            Button("Add All") { model.acceptAllSuggestions() }
+                                .controlSize(.small)
+                            Button {
+                                withAnimation { model.showSuggestions = false }
+                            } label: {
+                                Image(systemName: "xmark")
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(.secondary)
+                            .help("Hide suggestions")
                         }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(.secondary)
-                        .help("Hide suggestions")
                     }
-                } footer: {
-                    Text("The apps people most often block, narrowed to the ones on this iPhone.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                }
+                if !model.chosenApps.isEmpty {
+                    gridSection(
+                        title: model.mode == .block ? "Blocked" : "Allowed",
+                        count: model.chosenApps.count,
+                        apps: model.chosenApps
+                    )
+                }
+                if !model.thirdPartyApps.isEmpty {
+                    gridSection(
+                        title: model.chosenApps.isEmpty ? "Your apps" : "Everything else",
+                        count: model.thirdPartyApps.count,
+                        apps: model.thirdPartyApps
+                    )
+                }
+                if !model.builtInApps.isEmpty {
+                    gridSection(title: "Apple apps", count: model.builtInApps.count, apps: model.builtInApps)
+                }
+                if model.filteredApps.isEmpty && !model.search.isEmpty {
+                    ContentUnavailableView.search(text: model.search)
+                        .frame(maxWidth: .infinity)
+                }
+                if !model.otherProfiles.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        ListSectionHeader(title: "Blocks not made by Cable", count: model.otherProfiles.count)
+                        ForEach(model.otherProfiles) { profileRow($0) }
+                        Text("Cable didn't create these. Take one over to manage it here instead.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
-            if !model.chosenApps.isEmpty {
-                Section {
-                    ForEach(model.chosenApps) { appRow($0) }
-                } header: {
-                    ListSectionHeader(title: model.mode == .block ? "Blocked" : "Allowed", count: model.chosenApps.count)
-                }
-            }
-            if !model.thirdPartyApps.isEmpty {
-                Section {
-                    ForEach(model.thirdPartyApps) { appRow($0) }
-                } header: {
-                    ListSectionHeader(title: model.chosenApps.isEmpty ? "Your apps" : "Everything else", count: model.thirdPartyApps.count)
-                }
-            }
-            if !model.builtInApps.isEmpty {
-                Section {
-                    ForEach(model.builtInApps) { appRow($0) }
-                } header: {
-                    ListSectionHeader(title: "Apple apps", count: model.builtInApps.count)
-                }
-            }
-            if !model.otherProfiles.isEmpty {
-                Section {
-                    ForEach(model.otherProfiles) { profileRow($0) }
-                } header: {
-                    ListSectionHeader(title: "Blocks not made by Cable", count: model.otherProfiles.count)
-                } footer: {
-                    Text("Cable didn't create these. Take one over to manage it here instead.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            if model.filteredApps.isEmpty && !model.search.isEmpty {
-                ContentUnavailableView.search(text: model.search)
-            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 16)
         }
-        .listStyle(.inset)
         .animation(.snappy(duration: 0.22), value: model.selected)
         .animation(.default, value: model.search)
     }
 
-    private func suggestionRow(_ app: InstalledApp) -> some View {
-        Button {
-            model.toggle(app.bundleID)
-        } label: {
-            HStack(spacing: 11) {
-                AppIconView(image: model.iconCache.image(for: app.bundleID), side: 36)
-                Text(app.name).foregroundStyle(.primary)
-                Spacer(minLength: 8)
-                Image(systemName: "plus.circle")
-                    .font(.system(size: 17))
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(.tint)
+    private func gridSection<Accessory: View>(
+        title: String,
+        count: Int,
+        apps: [InstalledApp],
+        footer: String? = nil,
+        @ViewBuilder accessory: () -> Accessory = { EmptyView() }
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                ListSectionHeader(title: title, count: count)
+                Spacer()
+                accessory()
             }
-            .padding(.vertical, 5)
-            .contentShape(Rectangle())
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 12)], alignment: .leading, spacing: 16) {
+                ForEach(apps) { appTile($0) }
+            }
+            if let footer {
+                Text(footer)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
-        .buttonStyle(.plain)
-        .help("Add \(app.name) to the block list")
     }
 
-    private func appRow(_ app: InstalledApp) -> some View {
+    private func appTile(_ app: InstalledApp) -> some View {
         let state = model.state(of: app.bundleID)
         let blockedElsewhere = model.blockedByOthers[app.bundleID]
         return Button {
             model.toggle(app.bundleID)
         } label: {
-            HStack(spacing: 12) {
-                AppIconView(image: model.iconCache.image(for: app.bundleID), side: 36,
-                            isBlocked: model.mode == .block && (state == .on))
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(app.name)
-                        .foregroundStyle(.primary)
-                    if let blockedElsewhere {
-                        Text("Already blocked by “\(blockedElsewhere)”")
-                            .font(.caption)
-                            .foregroundStyle(.orange)
-                    }
-                }
-                Spacer(minLength: 8)
-                BlockToggle(state: state, blockingVerb: model.mode == .block)
-            }
-            .padding(.vertical, 5)
-            .contentShape(Rectangle())
+            AppTile(
+                image: model.iconCache.image(for: app.bundleID),
+                name: app.name,
+                state: state,
+                blocking: model.mode == .block
+            )
         }
         .buttonStyle(.plain)
-        .help(app.bundleID)
+        .help(blockedElsewhere.map { "\(app.name) — already blocked by “\($0)”" } ?? app.name)
     }
 
     private func profileRow(_ profile: InstalledProfile) -> some View {
@@ -316,7 +292,7 @@ struct BlockListView: View {
                 .frame(width: 32)
             Text(host)
             Spacer(minLength: 8)
-            BlockToggle(state: model.siteState(of: host), blockingVerb: model.mode == .block)
+            StateBadge(state: model.siteState(of: host), blocking: model.mode == .block)
             Button {
                 model.removeSite(host)
             } label: {

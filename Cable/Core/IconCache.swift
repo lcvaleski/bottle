@@ -27,7 +27,8 @@ final class IconCache {
     }
 
     func image(for bundleID: String) -> NSImage? {
-        images[bundleID]
+        if Demo.isOn { return Demo.placeholderIcon(for: bundleID) }
+        return images[bundleID]
     }
 
     /// Loads whatever is on disk for this phone, then fetches icons for any

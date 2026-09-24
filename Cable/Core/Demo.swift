@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 /// Fake state for designing and screenshotting the UI without a phone attached.
@@ -44,6 +45,39 @@ enum Demo {
         ("com.amazon.Amazon", "Amazon"),
     ].map { InstalledApp(bundleID: $0.0, name: $0.1, isBuiltIn: false) })
         + RestrictionsProfile.builtInApps.prefix(14)
+
+    /// Stand-in app icons so the grid can be laid out without a phone attached.
+    private static var placeholders: [String: NSImage] = [:]
+
+    static func placeholderIcon(for bundleID: String) -> NSImage? {
+        if let cached = placeholders[bundleID] { return cached }
+        let name = apps.first { $0.bundleID == bundleID }?.name ?? bundleID
+        let side = 128.0
+        guard let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: Int(side), pixelsHigh: Int(side),
+            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+            colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
+        ) else { return nil }
+
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        let hue = Double(abs(bundleID.hashValue) % 360) / 360
+        NSColor(calibratedHue: hue, saturation: 0.62, brightness: 0.82, alpha: 1).setFill()
+        NSBezierPath(roundedRect: NSRect(x: 0, y: 0, width: side, height: side), xRadius: side * 0.23, yRadius: side * 0.23).fill()
+        let letter = String(name.prefix(1)).uppercased() as NSString
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: side * 0.5, weight: .semibold),
+            .foregroundColor: NSColor.white,
+        ]
+        let size = letter.size(withAttributes: attrs)
+        letter.draw(at: NSPoint(x: (side - size.width) / 2, y: (side - size.height) / 2), withAttributes: attrs)
+        NSGraphicsContext.restoreGraphicsState()
+
+        let image = NSImage(size: NSSize(width: side, height: side))
+        image.addRepresentation(rep)
+        placeholders[bundleID] = image
+        return image
+    }
 
     static let otherProfile = InstalledProfile(
         identifier: "MacBook-Air-639.3682B6C0",

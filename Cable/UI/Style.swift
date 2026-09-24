@@ -84,51 +84,73 @@ struct AppIconView: View {
     }
 }
 
-/// The trailing control on an app or site row. Reads as a state, not a checkbox:
-/// filled when live, outlined-with-tint when the change is still pending.
-struct BlockToggle: View {
+/// One app in the grid. Icon-led: the icon is the whole control, and blocking
+/// draws a border around it. A name only appears when there's no icon to show,
+/// so a tile is never unidentifiable.
+struct AppTile: View {
+    let image: NSImage?
+    let name: String
     let state: AppRestrictionsModel.RowState
-    let blockingVerb: Bool   // true = "Blocked", false = "Allowed" (allow-list mode)
+    let blocking: Bool
+    var side: CGFloat = 72
+
+    private var ring: (color: Color, dashed: Bool)? {
+        switch state {
+        case .off: nil
+        case .on: (blocking ? .red : .green, false)
+        case .willTurnOn: (.orange, false)
+        case .willTurnOff: (.orange, true)
+        }
+    }
 
     var body: some View {
-        HStack(spacing: 7) {
-            if let caption {
-                Text(caption)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(tint)
+        VStack(spacing: 4) {
+            ZStack {
+                AppIconView(image: image, side: side, isBlocked: blocking && state == .on)
+                if let ring {
+                    RoundedRectangle(cornerRadius: (side + 10) * 0.235, style: .continuous)
+                        .strokeBorder(
+                            ring.color,
+                            style: StrokeStyle(lineWidth: 2.5, dash: ring.dashed ? [4, 3] : [])
+                        )
+                        .frame(width: side + 10, height: side + 10)
+                }
             }
-            Image(systemName: symbol)
-                .font(.system(size: 17))
-                .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(state == .off ? AnyShapeStyle(.tertiary) : AnyShapeStyle(tint))
-                .contentTransition(.symbolEffect(.replace))
+            .frame(width: side + 14, height: side + 14)
+
+            if image == nil {
+                Text(name)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(width: side + 14)
+            }
         }
         .animation(.snappy(duration: 0.18), value: state)
     }
+}
 
-    private var caption: String? {
+/// State for rows that stay textual (websites), where a tile makes no sense.
+struct StateBadge: View {
+    let state: AppRestrictionsModel.RowState
+    let blocking: Bool
+
+    var body: some View {
+        if let (text, color) = label {
+            Text(text)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(color)
+                .animation(.snappy(duration: 0.18), value: state)
+        }
+    }
+
+    private var label: (String, Color)? {
         switch state {
         case .off: nil
-        case .on: blockingVerb ? "Blocked" : "Allowed"
-        case .willTurnOn: blockingVerb ? "Will block" : "Will allow"
-        case .willTurnOff: "Will undo"
-        }
-    }
-
-    private var symbol: String {
-        switch state {
-        case .off: "circle"
-        case .on: blockingVerb ? "slash.circle.fill" : "checkmark.circle.fill"
-        case .willTurnOn: "circle.inset.filled"
-        case .willTurnOff: "circle.dashed"
-        }
-    }
-
-    private var tint: Color {
-        switch state {
-        case .off: .secondary
-        case .on: blockingVerb ? .red : .green
-        case .willTurnOn, .willTurnOff: .orange
+        case .on: (blocking ? "Blocked" : "Allowed", blocking ? .red : .green)
+        case .willTurnOn: (blocking ? "Will block" : "Will allow", .orange)
+        case .willTurnOff: ("Will undo", .orange)
         }
     }
 }
