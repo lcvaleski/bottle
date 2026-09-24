@@ -5,10 +5,10 @@
 ```sh
 brew install xcodegen
 xcodegen generate
-open Bottle.xcodeproj
+open Cable.xcodeproj
 ```
 
-`Bottle.xcodeproj` is generated and git-ignored; edit `project.yml` instead of
+`Cable.xcodeproj` is generated and git-ignored; edit `project.yml` instead of
 the project file. Xcode 26 and macOS 14+ are required. Apple Configurator must
 be installed to actually talk to a phone, but the app builds without it.
 
@@ -22,12 +22,12 @@ The supervision wizard erases the phone. Test it on a device you can wipe.
 
 ## Tests
 
-`BottleTests` covers the pure parsing layer — cfgutil JSON, `.mobileconfig`
+`CableTests` covers the pure parsing layer — cfgutil JSON, `.mobileconfig`
 payloads, keychain labels — using output captured from real devices. Run them
 with ⌘U in Xcode or:
 
 ```sh
-xcodebuild -project Bottle.xcodeproj -scheme Bottle -destination 'platform=macOS' test
+xcodebuild -project Cable.xcodeproj -scheme Cable -destination 'platform=macOS' test
 ```
 
 When a phone or a new cfgutil version produces output the app mis-parses,

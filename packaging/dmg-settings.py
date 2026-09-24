@@ -1,4 +1,4 @@
-# dmgbuild settings for the Bottle installer window.
+# dmgbuild settings for the Cable installer window.
 # Writes .DS_Store directly (no Finder AppleScript), so it works on a CI runner.
 import os
 

@@ -1,5 +1,5 @@
 # xcodegen output — run `xcodegen generate` to recreate
-Bottle.xcodeproj/
+Cable.xcodeproj/
 build/
 DerivedData/
 .DS_Store

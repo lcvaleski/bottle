@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex">
-    <title>Bottle</title>
+    <title>Cable</title>
     <link rel="icon" type="image/png" href="/icon.png">
     <link rel="apple-touch-icon" href="/icon.png">
     <style>
@@ -41,7 +41,7 @@
 </head>
 <body>
     <main>
-        <h1>Bottle</h1>
+        <h1>Cable</h1>
         <div id="loading"><p class="muted">Checking…</p></div>
         <div id="error" hidden><p class="error"></p></div>
 
@@ -68,17 +68,17 @@
             <p>On this iPhone:</p>
             <ol>
                 <li>Open <strong>Settings → General → VPN &amp; Device Management</strong></li>
-                <li>Tap <strong>Bottle App Restrictions</strong></li>
+                <li>Tap <strong>Cable App Restrictions</strong></li>
                 <li>Tap <strong>Remove Profile</strong>, enter your iPhone passcode</li>
                 <li>Enter the password above</li>
             </ol>
-            <p class="muted">Your apps come back immediately. To lock again, open Bottle on your Mac — it will pick up where you left off.</p>
+            <p class="muted">Your apps come back immediately. To lock again, open Cable on your Mac — it will pick up where you left off.</p>
         </div>
 
         <!-- approver -->
         <div id="approver" hidden>
             <p>Someone chose you as the person who can unblock their iPhone early.</p>
-            <p class="muted">They asked Bottle to block some apps and gave you the say on when they come back. If they've talked to you and you're okay with it, approve below. Otherwise do nothing — their timer still runs on its own.</p>
+            <p class="muted">They asked Cable to block some apps and gave you the say on when they come back. If they've talked to you and you're okay with it, approve below. Otherwise do nothing — their timer still runs on its own.</p>
             <button class="button" id="approve">Approve unblock</button>
             <p id="approved" hidden><strong>Done.</strong> They can get their password now.</p>
         </div>
@@ -125,7 +125,7 @@
         }
 
         if (!kind || !id || !token) {
-            fail(new Error('This link is incomplete. Open it exactly as Bottle gave it to you.'));
+            fail(new Error('This link is incomplete. Open it exactly as Cable gave it to you.'));
         } else if (kind === 'a') {
             show(['approver']);
             $('#approve').onclick = () => { $('#approve').disabled = true; api('/approve', 'POST').then(() => { $('#approved').hidden = false; }).catch(fail); };

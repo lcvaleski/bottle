@@ -4,12 +4,12 @@
   "redirects": [
     {
       "source": "/download",
-      "destination": "https://github.com/lcvaleski/bottle/releases/latest/download/Bottle.dmg",
+      "destination": "https://github.com/lcvaleski/cable/releases/latest/download/Cable.dmg",
       "permanent": false
     },
     {
       "source": "/github",
-      "destination": "https://github.com/lcvaleski/bottle",
+      "destination": "https://github.com/lcvaleski/cable",
       "permanent": false
     }
   ],

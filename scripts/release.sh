@@ -1,9 +1,9 @@
 #!/bin/bash
-# Build, sign, notarize, and package Bottle.
+# Build, sign, notarize, and package Cable.
 #
 #   scripts/release.sh <version> [build-number]
 #
-# Produces dist/Bottle-<version>.dmg (+ dist/appcast.xml when a Sparkle key is present).
+# Produces dist/Cable-<version>.dmg (+ dist/appcast.xml when a Sparkle key is present).
 #
 # Environment — all optional. Missing pieces are skipped with a warning, so the
 # script runs locally with nothing set and produces an ad-hoc-signed DMG:
@@ -23,7 +23,7 @@ SIGNING_IDENTITY="${SIGNING_IDENTITY:--}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DERIVED="$ROOT/build/release"
 DIST="$ROOT/dist"
-APP_NAME="Bottle"
+APP_NAME="Cable"
 DMG_NAME="$APP_NAME-$VERSION.dmg"
 
 log()  { printf '\n\033[1;34m==> %s\033[0m\n' "$*"; }
@@ -142,7 +142,7 @@ else
 fi
 
 # A stable filename so a download link never has to name a version:
-# https://github.com/<owner>/<repo>/releases/latest/download/Bottle.dmg
+# https://github.com/<owner>/<repo>/releases/latest/download/Cable.dmg
 # Created after the appcast so generate_appcast doesn't see it as a second update.
 cp "$DIST/$DMG_NAME" "$DIST/$APP_NAME.dmg"
 

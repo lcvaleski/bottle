@@ -15,7 +15,7 @@ It is deliberately a 1× 600×424 PNG. A multi-resolution TIFF (`tiffutil
 -cathidpicheck`) is the "correct" way to get a crisp Retina background, but
 Finder renders it at 2× its intended size, which pushes the layout off-screen.
 
-`volume.icns` is the app icon, so the mounted disk shows the Bottle icon.
+`volume.icns` is the app icon, so the mounted disk shows the Cable icon.
 
 The layout assumes Finder may show its ~26pt status bar at the bottom
 (`show_status_bar = False` is not always honoured), so nothing is drawn below

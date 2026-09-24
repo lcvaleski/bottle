@@ -1,4 +1,4 @@
-name: Bottle
+name: Cable
 options:
   bundleIdPrefix: com.coventrylabs
   deploymentTarget:
@@ -12,17 +12,17 @@ packages:
     from: "2.7.0"
 
 targets:
-  Bottle:
+  Cable:
     type: application
     platform: macOS
     sources:
-      - Bottle
+      - Cable
     dependencies:
       - package: Sparkle
     info:
-      path: Bottle/Info.plist
+      path: Cable/Info.plist
       properties:
-        CFBundleDisplayName: Bottle
+        CFBundleDisplayName: Cable
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSApplicationCategoryType: public.app-category.utilities
@@ -34,7 +34,7 @@ targets:
         SUPublicEDKey: $(SPARKLE_PUBLIC_ED_KEY)
         SUEnableInstallerLauncherService: false
     entitlements:
-      path: Bottle/Bottle.entitlements
+      path: Cable/Cable.entitlements
       properties:
         # Sandbox stays off: the app must spawn cfgutil/openssl and read ~/Library/Application Support/MobileSync.
         com.apple.security.app-sandbox: false
@@ -42,7 +42,7 @@ targets:
       base:
         SWIFT_VERSION: "5.0"
         MACOSX_DEPLOYMENT_TARGET: "14.0"
-        PRODUCT_BUNDLE_IDENTIFIER: com.coventrylabs.bottle
+        PRODUCT_BUNDLE_IDENTIFIER: com.coventrylabs.cable
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -59,31 +59,31 @@ targets:
         Release:
           OTHER_CODE_SIGN_FLAGS: "--timestamp"
 
-  BottleTests:
+  CableTests:
     type: bundle.unit-test
     platform: macOS
     sources:
-      - BottleTests
+      - CableTests
     dependencies:
-      - target: Bottle
+      - target: Cable
     settings:
       base:
         SWIFT_VERSION: "5.0"
-        PRODUCT_BUNDLE_IDENTIFIER: com.coventrylabs.bottle.tests
+        PRODUCT_BUNDLE_IDENTIFIER: com.coventrylabs.cable.tests
         CODE_SIGN_IDENTITY: "-"
         GENERATE_INFOPLIST_FILE: YES
 
 schemes:
-  Bottle:
+  Cable:
     build:
       targets:
-        Bottle: all
-        BottleTests: [test]
+        Cable: all
+        CableTests: [test]
     run:
       config: Debug
     test:
       config: Debug
       targets:
-        - BottleTests
+        - CableTests
     archive:
       config: Release

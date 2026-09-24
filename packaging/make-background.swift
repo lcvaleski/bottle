@@ -50,13 +50,13 @@ func draw(scale: CGFloat, to path: String) {
     }
 
     // Above the icons
-    center("Drag Bottle to your Applications folder", .systemFont(ofSize: 18, weight: .semibold),
+    center("Drag Cable to your Applications folder", .systemFont(ofSize: 18, weight: .semibold),
            NSColor(calibratedWhite: 0.12, alpha: 1), fromTop: 52)
     // Below the icon labels
     // Finder may show a ~26pt status bar at the bottom; keep everything above it.
-    center("Then eject this disk image and open Bottle from Applications.",
+    center("Then eject this disk image and open Cable from Applications.",
            .systemFont(ofSize: 12.5, weight: .regular), NSColor(calibratedWhite: 0.42, alpha: 1), fromTop: 296)
-    center("Bottle also needs Apple Configurator, free on the Mac App Store.",
+    center("Cable also needs Apple Configurator, free on the Mac App Store.",
            .systemFont(ofSize: 12.5, weight: .regular), NSColor(calibratedWhite: 0.42, alpha: 1), fromTop: 316)
 
     NSGraphicsContext.restoreGraphicsState()

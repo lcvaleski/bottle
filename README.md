@@ -1,4 +1,4 @@
-# Bottle
+# Cable
 
 A small macOS app that supervises your own iPhone with Apple Configurator's
 `cfgutil`, then lets you block or allow-list the apps on it.
@@ -12,7 +12,7 @@ Hiding or allow-listing apps (`com.apple.applicationaccess` →
 `blockedAppBundleIDs` / `allowListedAppBundleIDs`) only works on a
 **supervised** device. Apple only lets a device become supervised while it is
 freshly erased (`cfgutil prepare` is "initial configuration of freshly erased
-devices"). Supervision survives a backup restore, so Bottle does:
+devices"). Supervision survives a backup restore, so Cable does:
 
 1. `cfgutil backup` — encrypted or not, whatever the phone is set to
 2. `cfgutil erase`
@@ -28,7 +28,7 @@ which is what authorizes this Mac to manage the phone.
 
 - macOS 14+, Xcode 26 (for building)
 - [Apple Configurator](https://apps.apple.com/app/id1037126344) from the Mac App
-  Store. Bottle calls `/Applications/Apple Configurator.app/Contents/MacOS/cfgutil`
+  Store. Cable calls `/Applications/Apple Configurator.app/Contents/MacOS/cfgutil`
   directly; you don't need to install the automation tools symlink.
 - `xcodegen` (`brew install xcodegen`) to regenerate the project.
 
@@ -36,10 +36,10 @@ which is what authorizes this Mac to manage the phone.
 
 ```sh
 xcodegen generate
-open Bottle.xcodeproj        # Run in Xcode
+open Cable.xcodeproj        # Run in Xcode
 # or
-xcodebuild -project Bottle.xcodeproj -scheme Bottle -configuration Debug -derivedDataPath build build
-open build/Build/Products/Debug/Bottle.app
+xcodebuild -project Cable.xcodeproj -scheme Cable -configuration Debug -derivedDataPath build build
+open build/Build/Products/Debug/Cable.app
 ```
 
 The app is unsandboxed on purpose: it spawns `cfgutil` and `openssl`, and
@@ -57,7 +57,7 @@ push a tag like `v0.2.0` and it publishes a GitHub Release with the notarized
 DMG and `appcast.xml`. The app checks
 `https://github.com/<owner>/<repo>/releases/latest/download/appcast.xml` for
 updates, and a marketing site can link to
-`https://github.com/<owner>/<repo>/releases/latest/download/Bottle-<version>.dmg`
+`https://github.com/<owner>/<repo>/releases/latest/download/Cable-<version>.dmg`
 or simply the releases page.
 
 One-time setup — add these as repository secrets:
@@ -79,8 +79,8 @@ build ad-hoc and uploads the DMG as an artifact.
 ## Layout
 
 ```
-Bottle/
-  BottleApp.swift                  entry point
+Cable/
+  CableApp.swift                  entry point
   Core/
     ProcessRunner.swift            async subprocess with line streaming + cancellation
     CfgUtil.swift                  cfgutil wrapper, JSON parsing, serialized calls
@@ -105,10 +105,10 @@ Bottle/
 
 ## Supervision identity
 
-Bottle needs the certificate + private key of whichever organization supervised
+Cable needs the certificate + private key of whichever organization supervised
 the phone. Three ways to get one, all handled in the app:
 
-- **Already supervised with Apple Configurator on this Mac** — Bottle finds the
+- **Already supervised with Apple Configurator on this Mac** — Cable finds the
   "Apple Configurator: <org>" identity in the login keychain, exports it as
   PKCS#12 via `SecItemExport`, and unpacks it with `/usr/bin/openssl` (LibreSSL;
   Apple's PKCS#12 uses RC2-40, which Homebrew's OpenSSL 3 refuses without
@@ -117,7 +117,7 @@ the phone. Three ways to get one, all handled in the app:
   Settings → Organizations → Export Supervision Identity) and import the `.p12`.
 - **Not supervised yet** — the wizard generates a self-signed identity.
 
-Files land in `~/Library/Application Support/Bottle/SupervisionIdentity/`
+Files land in `~/Library/Application Support/Cable/SupervisionIdentity/`
 (`supervision-cert.der`, `supervision-key.der` at 0600, `organization.txt`).
 **Back these up.** Without the key this Mac can no longer manage the phone, and
 re-supervising means another erase.
@@ -147,9 +147,9 @@ leak of the store is a nuisance, not a takeover. No accounts, no payments yet.
 ## Existing profiles
 
 The phone only reports a profile's identifier and name, never its payload. To
-show what an existing profile blocks, Bottle Spotlight-searches this Mac for
+show what an existing profile blocks, Cable Spotlight-searches this Mac for
 `.mobileconfig` files, matches `PayloadIdentifier`, and reads the app list from
-the file. "Add to Bottle" folds that list into Bottle's own profile so the old
+the file. "Add to Cable" folds that list into Cable's own profile so the old
 one can be removed. Profiles with no matching file show "Contents unknown".
 Signed (CMS-wrapped) profiles aren't parsed yet.
 
@@ -182,6 +182,6 @@ Restriction selections are remembered per phone in `UserDefaults`
 - Find My must be off before the erase; cfgutil can't check Activation Lock, so
   the wizard asks the user to confirm.
 - Only one Mac (the one holding the identity) can manage the phone. Check
-  "Allow devices to pair with other computers" isn't needed — Bottle does not
+  "Allow devices to pair with other computers" isn't needed — Cable does not
   pass `--forbid-pairing`, so Finder sync still works.
 - Blocking `com.apple.mobilephone`, Settings, etc. isn't offered; iOS ignores it.
