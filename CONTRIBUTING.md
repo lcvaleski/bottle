@@ -12,13 +12,27 @@ open Cable.xcodeproj
 the project file. Xcode 26 and macOS 14+ are required. Apple Configurator must
 be installed to actually talk to a phone, but the app builds without it.
 
+## Working without a phone
+
+Most of the app talks to a real iPhone, but you don't need one to work on the
+interface:
+
+```sh
+CABLE_DEMO=1 open build/Build/Products/Debug/Cable.app
+```
+
+That fills the app with a fake supervised iPhone, a stand-in app list and
+generated placeholder icons. `CABLE_DEMO_SCREEN=lock|locked|setup` opens one
+screen straight away. Demo mode never runs `cfgutil` and never touches the
+network.
+
 ## Testing against a phone
 
-Most of the app only works with a real, supervised iPhone plugged in. Open the
-activity log (⌘⇧L) and include its output in bug reports — it shows the exact
-`cfgutil` invocations and their raw output.
+Open the activity log (⌘⇧L) and include its output in bug reports — it shows
+the exact `cfgutil` invocations and their raw output.
 
-The supervision wizard erases the phone. Test it on a device you can wipe.
+The setup wizard erases the phone. Test it on a device you can wipe, and turn
+Find My off first or the erase fails.
 
 ## Tests
 
@@ -35,7 +49,7 @@ paste the raw JSON from the activity log into a test first.
 
 ## Pull requests
 
-- Keep `swift build`-style warnings at zero; CI builds every PR.
+- Keep the build warning-free; CI runs the tests and builds a DMG on every PR.
 - Match the surrounding style; no formatter is enforced.
 - Anything that changes what gets installed on a phone (profile payloads,
   identifiers) needs a note in the PR about compatibility with phones that
