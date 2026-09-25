@@ -173,7 +173,8 @@
 
         /* Paid: nobody walks — the motion is the clock, the asking and the reply. */
         .paid .clk       { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
-        .paid .hand      { transform-box: view-box; transform-origin: 380px 124px; animation: spin 2.6s linear infinite; }
+        .paid .brand     { font: 600 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; fill: #111; stroke: none; text-anchor: middle; }
+        .paid .hand      { transform-box: view-box; transform-origin: 373px 134px; animation: spin 2.6s linear infinite; }
         .paid .ask       { animation: pAsk 16s linear infinite; }
         .paid .reply     { animation: pReply 16s linear infinite; }
         .paid .ig-back   { animation: pBack 16s linear infinite; }
@@ -326,12 +327,12 @@
             <details>
                 <summary>Why it holds</summary>
                 <p>Apple lets exactly one computer manage a supervised phone: the one that set it up. That's your Mac. The phone's own Settings has no remove button. So unblocking means the walk back to your laptop and the cable.</p>
-                <p>No account, no server. If we vanish, nothing changes.</p>
+                <p>No account, and nothing of yours leaves your Mac. If Cable disappears tomorrow, nothing changes.</p>
             </details>
 
             <h2>Paid <span class="soon">free during beta</span></h2>
             <svg class="diagram paid" viewBox="0 0 440 190" role="img"
-                 aria-label="Instagram is gone from the phone and your Mac can no longer undo it. You ask from the phone, a timer counts down, the password arrives from the server, you type it in and the app comes back.">
+                 aria-label="Instagram is gone from the phone and your Mac can no longer undo it. You ask from the phone, a timer counts down, the password arrives from Cable, you type it in and the app comes back.">
                 <defs>
                     <radialGradient id="ig2" cx="28%" cy="104%" r="140%">
                         <stop offset="0%" stop-color="#fdf497"/>
@@ -349,13 +350,13 @@
                     <path d="M26 112 h72"/>
                     <path d="M38 104 L86 74" stroke="#c00" stroke-width="2"/>
 
-                    <!-- The server holds the password, behind a clock. -->
-                    <rect x="348" y="58" width="64" height="18" rx="2"/>
-                    <rect x="348" y="80" width="64" height="18" rx="2"/>
-                    <circle cx="357" cy="67" r="1.6" fill="currentColor" stroke="none"/>
-                    <circle cx="357" cy="89" r="1.6" fill="currentColor" stroke="none"/>
-                    <circle cx="380" cy="124" r="13"/>
-                    <g class="hand"><path d="M380 124 V115"/></g>
+                    <!-- Us, not "a server": the Cable mark, named, with a clock under it. -->
+                    <rect x="350" y="54" width="46" height="46" rx="11"/>
+                    <rect x="367" y="74" width="12" height="16" rx="3"/>
+                    <path d="M370 74 v-6 M376 74 v-6 M373 90 v9"/>
+                    <text class="brand" x="373" y="116">Cable</text>
+                    <circle cx="373" cy="134" r="12"/>
+                    <g class="hand"><path d="M373 134 V126"/></g>
 
                     <!-- The person never goes back to the Mac. -->
                     <circle cx="200" cy="84" r="9"/>
@@ -373,11 +374,11 @@
 
                     <!-- Ask, then wait, then the password comes back. -->
                     <g class="ask">
-                        <path d="M242 100 C 280 86, 312 80, 342 78" stroke-dasharray="3 4"/>
-                        <path d="M334 72 l9 6 l-9 5"/>
+                        <path d="M242 100 C 280 88, 312 80, 344 76" stroke-dasharray="3 4"/>
+                        <path d="M336 70 l9 6 l-9 5"/>
                     </g>
                     <g class="reply">
-                        <path d="M344 102 C 314 112, 282 118, 250 118" stroke-dasharray="3 4"/>
+                        <path d="M346 96 C 316 110, 282 118, 250 118" stroke-dasharray="3 4"/>
                         <path d="M258 112 l-9 6 l9 5"/>
                         <rect x="288" y="126" width="18" height="11" rx="2"/>
                         <path d="M292 126 v-3 a5 5 0 0 1 10 0 v3"/>
@@ -398,7 +399,7 @@
             <p><strong>A lock.</strong> Click Lock and nothing can unblock — not even your Mac — until the delay you chose runs out, or the person you chose says yes.</p>
             <details>
                 <summary>Why it holds</summary>
-                <p>Lock does two things. It re-installs the block with a password you never see, and it moves your Mac's permission to manage the phone onto our server. After that, plugging into your Mac does nothing. The only way to unblock is the password, which iOS demands in Settings — and we hand it over only after the delay, or when your person approves. No Mac needed.</p>
+                <p>Lock does two things. It re-installs the block with a password you never see, and it hands your Mac's permission to manage the phone over to Cable. After that, plugging into your Mac does nothing. The only way to unblock is the password, which iOS demands in Settings — and we hand it over only after the delay, or when your person approves. No Mac needed.</p>
                 <p>The one door that always works is erasing the phone. That's Apple's rule, and it's why nothing here can brick a phone.</p>
             </details>
         </section>
