@@ -172,10 +172,44 @@
             77%, 100%         { opacity: 1 }
         }
 
+        /* Paid: nobody walks — the motion is the clock, the asking and the reply. */
+        .paid .clk       { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+        .paid .hand      { transform-box: view-box; transform-origin: 380px 124px; animation: spin 2.6s linear infinite; }
+        .paid .ask       { animation: pAsk 16s linear infinite; }
+        .paid .reply     { animation: pReply 16s linear infinite; }
+        .paid .ig-back   { animation: pBack 16s linear infinite; }
+        .paid .clk1      { animation: pClk1 16s linear infinite; }
+        .paid .clk2      { animation: pClk2 16s linear infinite; }
+        .paid .clk3      { animation: pClk3 16s linear infinite; }
+        .paid .clk4      { animation: pClk4 16s linear infinite; }
+        .paid .pcap1     { animation: pCap1 16s linear infinite; }
+        .paid .pcap2     { animation: pCap2 16s linear infinite; }
+        .paid .pcap3     { animation: pCap3 16s linear infinite; }
+        .paid .pcap4     { animation: pCap4 16s linear infinite; }
+        .paid .pcap5     { animation: pCap5 16s linear infinite; }
+
+        @keyframes spin   { to { transform: rotate(360deg) } }
+        @keyframes pAsk   { 0%,24.99% {opacity:0} 25%,37.4% {opacity:1} 37.5%,100% {opacity:0} }
+        @keyframes pReply { 0%,68.74% {opacity:0} 68.75%,78.9% {opacity:1} 79%,100% {opacity:0} }
+        @keyframes pBack  { 0%,78.99% {opacity:0} 79%,100% {opacity:1} }
+        @keyframes pClk1  { 0%,37.49% {opacity:0} 37.5%,44.9% {opacity:1} 45%,100% {opacity:0} }
+        @keyframes pClk2  { 0%,44.99% {opacity:0} 45%,53.9% {opacity:1} 54%,100% {opacity:0} }
+        @keyframes pClk3  { 0%,53.99% {opacity:0} 54%,61.9% {opacity:1} 62%,100% {opacity:0} }
+        @keyframes pClk4  { 0%,61.99% {opacity:0} 62%,68.6% {opacity:1} 68.7%,100% {opacity:0} }
+        @keyframes pCap1  { 0%,22% {opacity:1} 22.01%,100% {opacity:0} }
+        @keyframes pCap2  { 0%,24.99% {opacity:0} 25%,37.4% {opacity:1} 37.5%,100% {opacity:0} }
+        @keyframes pCap3  { 0%,37.49% {opacity:0} 37.5%,68.6% {opacity:1} 68.7%,100% {opacity:0} }
+        @keyframes pCap4  { 0%,68.74% {opacity:0} 68.75%,78.9% {opacity:1} 79%,100% {opacity:0} }
+        @keyframes pCap5  { 0%,78.99% {opacity:0} 79%,100% {opacity:1} }
+
         @media (prefers-reduced-motion: reduce) {
             .anim .walker, .anim .cable, .anim .appicon, .anim .friends,
             .anim .jump, .anim .cap1, .anim .cap2, .anim .cap3 { animation: none; }
             .anim .cap2, .anim .cap3, .anim .friends { opacity: 0; }
+            .paid .hand, .paid .ask, .paid .reply, .paid .ig-back,
+            .paid .clk, .paid .cap { animation: none; }
+            .paid .ask, .paid .reply, .paid .ig-back, .paid .clk,
+            .paid .pcap2, .paid .pcap3, .paid .pcap4, .paid .pcap5 { opacity: 0; }
         }
         .tiers h2:not(:first-child) { margin-top: 28px; }
         .soon { font-weight: normal; font-size: 12px; color: #666; border: 1px solid rgb(233, 233, 233); padding: 1px 6px; margin-left: 6px; vertical-align: middle; }
@@ -298,46 +332,69 @@
             </details>
 
             <h2>Paid <span class="soon">free during beta</span></h2>
-            <svg class="diagram" viewBox="0 0 440 150" role="img" aria-label="Your iPhone locked; your Mac can no longer unblock it; our server can, after a timer">
+            <svg class="diagram paid" viewBox="0 0 440 190" role="img"
+                 aria-label="Instagram is gone from the phone and your Mac can no longer undo it. You ask from the phone, a timer counts down, the password arrives from the server, you type it in and the app comes back.">
+                <defs>
+                    <radialGradient id="ig2" cx="28%" cy="104%" r="140%">
+                        <stop offset="0%" stop-color="#fdf497"/>
+                        <stop offset="8%" stop-color="#fdf497"/>
+                        <stop offset="38%" stop-color="#fd5949"/>
+                        <stop offset="58%" stop-color="#d6249f"/>
+                        <stop offset="92%" stop-color="#285aeb"/>
+                    </radialGradient>
+                </defs>
                 <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <!-- phone with lock -->
-                    <rect x="52" y="14" width="26" height="46" rx="4"/>
-                    <line x1="61" y1="54" x2="69" y2="54"/>
-                    <rect x="59" y="32" width="12" height="10" rx="1.5"/>
-                    <path d="M61 32 v-3 a4 4 0 0 1 8 0 v3"/>
-                    <!-- mac, key crossed out -->
-                    <rect x="192" y="16" width="56" height="34" rx="3"/>
-                    <line x1="184" y1="56" x2="256" y2="56"/>
-                    <g stroke="#999">
-                        <circle cx="208" cy="33" r="5"/>
-                        <line x1="212" y1="36" x2="228" y2="46"/>
+
+                    <!-- The Mac is struck out for good: it can't undo this one. -->
+                    <path d="M26 152 h388" stroke-dasharray="2 7"/>
+                    <rect x="34" y="70" width="56" height="36" rx="3"/>
+                    <path d="M26 112 h72"/>
+                    <path d="M38 104 L86 74" stroke="#c00" stroke-width="2"/>
+
+                    <!-- The server holds the password, behind a clock. -->
+                    <rect x="348" y="58" width="64" height="18" rx="2"/>
+                    <rect x="348" y="80" width="64" height="18" rx="2"/>
+                    <circle cx="357" cy="67" r="1.6" fill="currentColor" stroke="none"/>
+                    <circle cx="357" cy="89" r="1.6" fill="currentColor" stroke="none"/>
+                    <circle cx="380" cy="124" r="13"/>
+                    <g class="hand"><path d="M380 124 V115"/></g>
+
+                    <!-- The person never goes back to the Mac. -->
+                    <circle cx="200" cy="84" r="9"/>
+                    <path d="M200 93 v27"/>
+                    <path d="M200 100 l-14 9 M200 100 l16 6"/>
+                    <path d="M200 120 l-10 26 M200 120 l10 26"/>
+                    <rect x="212" y="100" width="24" height="40" rx="4"/>
+                    <path d="M218 134 h12"/>
+                    <g class="ig-back">
+                        <rect x="215" y="106" width="18" height="18" rx="5" fill="url(#ig2)" stroke="none"/>
+                        <rect x="218" y="109" width="12" height="12" rx="3.6" fill="none" stroke="#fff" stroke-width="1.2"/>
+                        <circle cx="224" cy="115" r="2.9" fill="none" stroke="#fff" stroke-width="1.2"/>
+                        <circle cx="228.1" cy="110.9" r="0.85" fill="#fff" stroke="none"/>
                     </g>
-                    <line x1="200" y1="46" x2="234" y2="22" stroke="#c00" stroke-width="2"/>
-                    <!-- server -->
-                    <rect x="330" y="14" width="60" height="16" rx="2"/>
-                    <rect x="330" y="34" width="60" height="16" rx="2"/>
-                    <circle cx="338" cy="22" r="1.5" fill="currentColor"/>
-                    <circle cx="338" cy="42" r="1.5" fill="currentColor"/>
-                    <!-- key on the server -->
-                    <circle cx="360" cy="22" r="4"/>
-                    <line x1="363" y1="24" x2="376" y2="32"/>
-                    <line x1="372" y1="30" x2="370" y2="33"/>
-                    <!-- clock -->
-                    <circle cx="374" cy="42" r="6"/>
-                    <line x1="374" y1="42" x2="374" y2="38"/>
-                    <line x1="374" y1="42" x2="377" y2="44"/>
-                    <!-- password path: server → phone, after the delay (routed under the labels) -->
-                    <path d="M360 106 C 360 130, 65 130, 65 112" stroke-dasharray="3 4"/>
-                    <path d="M60 118 L65 110 L70 118"/>
-                </g>
-                <g font-size="12" fill="#333" text-anchor="middle">
-                    <text x="65" y="82">your iPhone</text>
-                    <text x="65" y="98" fill="#666">locked</text>
-                    <text x="220" y="82">your Mac</text>
-                    <text x="220" y="98" fill="#666">can't unblock</text>
-                    <text x="360" y="82">our server</text>
-                    <text x="360" y="98" fill="#666">can unblock</text>
-                    <text x="212" y="145" fill="#666">…but only after the delay you chose</text>
+
+                    <!-- Ask, then wait, then the password comes back. -->
+                    <g class="ask">
+                        <path d="M242 100 C 280 86, 312 80, 342 78" stroke-dasharray="3 4"/>
+                        <path d="M334 72 l9 6 l-9 5"/>
+                    </g>
+                    <g class="reply">
+                        <path d="M344 102 C 314 112, 282 118, 250 118" stroke-dasharray="3 4"/>
+                        <path d="M258 112 l-9 6 l9 5"/>
+                        <rect x="288" y="126" width="18" height="11" rx="2"/>
+                        <path d="M292 126 v-3 a5 5 0 0 1 10 0 v3"/>
+                    </g>
+
+                    <text class="clk clk1" x="232" y="50">23:14:52</text>
+                    <text class="clk clk2" x="232" y="50">11:47:03</text>
+                    <text class="clk clk3" x="232" y="50">02:22:19</text>
+                    <text class="clk clk4" x="232" y="50">00:00:07</text>
+
+                    <text class="cap pcap1" x="220" y="178">Even your Mac can't undo it</text>
+                    <text class="cap pcap2" x="220" y="178">Ask, from the phone</text>
+                    <text class="cap pcap3" x="220" y="178">Wait the delay you chose</text>
+                    <text class="cap pcap4" x="220" y="178">The password arrives</text>
+                    <text class="cap pcap5" x="220" y="178">Type it in — it's back</text>
                 </g>
             </svg>
             <p><strong>A lock.</strong> Click Lock and nothing can unblock — not even your Mac — until the delay you chose runs out, or the person you chose says yes.</p>
