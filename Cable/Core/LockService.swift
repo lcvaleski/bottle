@@ -3,7 +3,7 @@ import Foundation
 /// Client for the Cable lock service (site/api). The server holds the profile's
 /// removal password and, while locked, this Mac's supervision identity.
 struct LockService {
-    static let baseURL = URL(string: "https://corephone.org")!
+    static let baseURL = URL(string: "https://cableblocker.com")!
 
     struct LockStatus: Codable {
         let id: String

@@ -165,9 +165,12 @@ only work over the cable or in Settings — so a leak of the store is a nuisance
 not a takeover. No accounts and no payments yet; delays from 5 minutes to 30
 days.
 
-`LockService.baseURL` is still `https://corephone.org`, the site's previous
-domain, because links handed to already-locked phones contain those URLs. That
-domain must keep serving for as long as any lock made with it is live.
+Lock links are absolute and baked into the phone's unlock page, so whatever
+host `LockService.baseURL` names has to keep serving for as long as any lock
+made with it is live. It points at `cableblocker.com`. The earlier
+`corephone.org` was detached from the project and now returns
+DEPLOYMENT_NOT_FOUND — nothing was locked through it, but the lesson stands:
+don't retire a host while a lock made on it exists.
 
 ## Existing profiles
 

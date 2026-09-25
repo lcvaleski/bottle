@@ -201,3 +201,49 @@ struct SuggestionOverlapTests {
         #expect(result.map(\.bundleID) == ["com.burbn.instagram"])
     }
 }
+
+@MainActor
+struct SelectionTests {
+    private func makeModel() -> AppRestrictionsModel {
+        let log = ActivityLog()
+        let cfgutil = CfgUtil(log: log)
+        return AppRestrictionsModel(
+            device: Device(ecid: "0xTEST"), cfgutil: cfgutil,
+            identityStore: SupervisionIdentityStore(), iconCache: IconCache(cfgutil: cfgutil)
+        )
+    }
+
+    /// Clicking a tile is the whole commitment now — the selection has to move
+    /// the instant it's clicked, with no staging step in between.
+    @Test func togglingFlipsStateImmediately() {
+        let model = makeModel()
+        model.selected = []
+        #expect(model.state(of: "com.burbn.instagram") == .off)
+        model.toggle("com.burbn.instagram")
+        #expect(model.state(of: "com.burbn.instagram") == .on)
+        model.toggle("com.burbn.instagram")
+        #expect(model.state(of: "com.burbn.instagram") == .off)
+    }
+
+    /// Sites are the same two-state affair, keyed by hostname.
+    @Test func sitesTrackTheirOwnState() {
+        let model = makeModel()
+        model.sites = []
+        model.siteInput = "https://www.Instagram.com/explore"
+        model.addSite()
+        #expect(model.sites == ["instagram.com"])
+        #expect(model.siteState(of: "instagram.com") == .on)
+        model.removeSite("instagram.com")
+        #expect(model.siteState(of: "instagram.com") == .off)
+    }
+
+    /// Junk in the field must not become a blocked host.
+    @Test func rubbishIsNotAddedAsASite() {
+        let model = makeModel()
+        model.sites = []
+        model.siteInput = "not a domain"
+        model.addSite()
+        #expect(model.sites.isEmpty)
+        #expect(model.siteInput == "not a domain", "and the text is left alone to be fixed")
+    }
+}

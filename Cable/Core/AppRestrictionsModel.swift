@@ -45,7 +45,7 @@ final class AppRestrictionsModel {
     private(set) var isApplying = false
     private(set) var statusMessage: String?
     private(set) var errorMessage: String?
-    private var saveTask: Task<Void, Never>?
+    private var saveGeneration = 0
 
     init(device: Device, cfgutil: CfgUtil, identityStore: SupervisionIdentityStore, iconCache: IconCache) {
         ecid = device.ecid
@@ -72,6 +72,7 @@ final class AppRestrictionsModel {
 
     func acceptAllSuggestions() {
         for app in suggestions { selected.insert(app.bundleID) }
+        scheduleSave()
     }
 
     /// Everything the user has picked or that is already live — the phone's
@@ -115,14 +116,22 @@ final class AppRestrictionsModel {
 
     /// Clicks come faster than cfgutil can answer, so coalesce them and send
     /// once the user stops.
+    ///
+    /// Superseded waiters bail on a generation check rather than being
+    /// cancelled: cancelling would tear down a `cfgutil` call already in
+    /// flight, since ProcessRunner terminates the process on cancellation.
     private func scheduleSave() {
-        saveTask?.cancel()
-        saveTask = Task { [weak self] in
+        saveGeneration += 1
+        let generation = saveGeneration
+        Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(700))
-            guard !Task.isCancelled else { return }
-            await self?.apply()
+            guard let self, generation == self.saveGeneration else { return }
+            await self.apply()
         }
     }
+
+    /// True when the user has moved on from what the phone is enforcing.
+    private var isDirty: Bool { selected != appliedApps || sites != appliedSites }
 
     /// Profiles on the phone that Cable didn't install.
     var otherProfiles: [InstalledProfile] { profiles.filter { !$0.isCable } }
@@ -237,7 +246,19 @@ final class AppRestrictionsModel {
     }
 
     func apply() async {
-        guard !isApplying else { return }
+        // A click that lands mid-save would otherwise be dropped, so remember
+        // to come back for it instead of returning empty-handed.
+        guard !isApplying else {
+            if isDirty { scheduleSave() }
+            return
+        }
+        if Demo.isOn {
+            appliedMode = mode
+            appliedApps = selected
+            appliedSites = sites
+            profileInstalled = !(selected.isEmpty && sites.isEmpty)
+            return
+        }
         isApplying = true
         errorMessage = nil
         statusMessage = nil
@@ -274,6 +295,9 @@ final class AppRestrictionsModel {
             selected = appliedApps
             sites = appliedSites
         }
+
+        // Anything clicked while that was running still needs sending.
+        if isDirty { scheduleSave() }
     }
 
     /// Removes a profile someone else installed (Apple Configurator, an MDM test, …).
@@ -299,10 +323,11 @@ final class AppRestrictionsModel {
         guard let r = profile.restrictions else { return }
         mode = r.mode
         selected.formUnion(r.bundleIDs)
+        scheduleSave()
         let unknown = r.bundleIDs.filter { id in !apps.contains { $0.bundleID == id } }
         // Apps the profile names but the phone doesn't have installed still deserve a row.
         apps.append(contentsOf: unknown.map { InstalledApp(bundleID: $0, name: $0, isBuiltIn: false) })
-        statusMessage = "Added \(r.bundleIDs.count) app\(r.bundleIDs.count == 1 ? "" : "s") from “\(profile.displayName)”. Apply, then remove the old profile."
+        statusMessage = "Added \(r.bundleIDs.count) app\(r.bundleIDs.count == 1 ? "" : "s"). You can remove “\(profile.displayName)” now."
     }
 
     func removeRestrictions() async {

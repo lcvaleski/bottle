@@ -5,7 +5,7 @@ import Observation
 ///
 /// Lock:   create on server → install password-profile → escrow identity → delete local identity.
 /// Unlock: the phone (or the approver) drives the server; this Mac just polls, and once
-///         released it pulls the identity back and returns to switch mode.
+///         released it pulls the key back and this Mac can change things again.
 @MainActor
 @Observable
 final class LockModel {
@@ -137,7 +137,7 @@ final class LockModel {
     }
 
     /// Once released: bring the identity home, take the locked profile off the phone
-    /// (if the user hasn't already typed the password), and go back to switch mode.
+    /// (if the user hasn't already typed the password), and hand control back.
     func finishUnlock(device: Device?) async {
         guard let record, !isWorking else { return }
         isWorking = true
@@ -161,7 +161,7 @@ final class LockModel {
             self.record = nil
             status = nil
             stopPolling()
-            cfgutil.log.info("Unlocked. Back in switch mode.")
+            cfgutil.log.info("Unlocked. This Mac can change the block again.")
         } catch {
             errorMessage = error.localizedDescription
         }
