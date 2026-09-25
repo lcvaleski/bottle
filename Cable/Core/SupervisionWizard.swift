@@ -190,6 +190,8 @@ final class SupervisionWizard {
             set(id, .done, "")
 
         case .erase:
+            // No --esim: the eSIM survives the erase, so the user doesn't have to
+            // re-activate with their carrier. Don't "fix" this by adding the flag.
             try await cfgutil.run("erase", ecid: ecid, timeout: 10, progress: true)
             set(id, .done, "")
 

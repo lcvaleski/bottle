@@ -269,6 +269,24 @@ somewhere it can't be recovered from.
   (Instagram, TikTok, Reddit, YouTube, Snapchat, Netflix); the dating and
   betting apps are unconfirmed, so one may simply fail to appear.
 
+## What survives the erase
+
+Cable's backup is an ordinary local backup, so Apple's rules apply:
+
+- **Encrypted backup** (Finder → your iPhone → General → Encrypt local backup):
+  keeps saved passwords, Health data, Wi-Fi passwords, call history.
+- **Unencrypted backup:** Apple deliberately omits all of the above. The wizard
+  warns when the phone reports `backupWillBeEncrypted: false`, because that one
+  checkbox is the difference between keeping every app login and losing it.
+- **Either way:** Apple Pay cards don't restore — they're device-bound tokens
+  and have to be re-added in Wallet. Face ID and Touch ID enrolment is redone.
+  Downloaded music and podcasts re-download.
+- **The eSIM stays.** `cfgutil erase` only removes it with `--esim`, which Cable
+  never passes.
+
+The end-to-end result of Cable's own `prepare` → `restore-backup` ordering
+hasn't been watched through on a real phone yet — see below.
+
 ## Known limits
 
 - Find My must be off before the erase; `cfgutil` can't check Activation Lock,

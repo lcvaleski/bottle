@@ -13,6 +13,13 @@ struct SupervisionWizardView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 heading
+                if !wizard.hasStarted, !wizard.skipBackup, device.backupWillBeEncrypted == false {
+                    NoticeBanner(
+                        tone: .warning,
+                        title: "Turn on encrypted backups first",
+                        detail: "Without it, saved passwords and Health data don't come back. Finder → your iPhone → General → Encrypt local backup."
+                    )
+                }
                 if wizard.isComplete {
                     doneNextSteps
                 } else if wizard.hasStarted {
@@ -142,7 +149,7 @@ struct SupervisionWizardView: View {
     /// to do there rather than "finish setup".
     private var doneNextSteps: some View {
         VStack(alignment: .leading, spacing: 9) {
-            ForEach(Array(["Tap through Hello on the iPhone", "Sign in to your Apple Account", "Choose “Don’t Transfer Apps & Data”"].enumerated()), id: \.offset) { i, line in
+            ForEach(Array(["Tap through Hello on the iPhone", "Sign in to your Apple Account", "Choose “Don’t Transfer Apps & Data”", "Re-add your cards in Wallet"].enumerated()), id: \.offset) { i, line in
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                     Text("\(i + 1)")
                         .font(.caption.weight(.semibold))
