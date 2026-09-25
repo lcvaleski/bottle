@@ -114,6 +114,35 @@
         .tiers summary:hover { text-decoration: underline; }
         .tiers details p { color: #333; font-size: 15px; margin: 8px 0 0; }
         .diagram { display: block; width: 100%; max-width: 440px; height: auto; margin: 6px 0 14px; color: black; }
+        .diagram .cap {
+            font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            fill: #333;
+            stroke: none;
+            text-anchor: middle;
+        }
+
+        /* Five scenes, one 17.5s loop, each on screen for a fifth of it. */
+        .anim .scene { opacity: 0; animation: scene 17.5s linear infinite; animation-delay: calc(var(--i) * 3.5s); }
+        @keyframes scene {
+            0%      { opacity: 0 }
+            2%, 18% { opacity: 1 }
+            20%     { opacity: 0 }
+            100%    { opacity: 0 }
+        }
+        /* The app fading out of the grid, and coming back at the end. */
+        .anim .vanish   { animation: blink 17.5s linear infinite; animation-delay: 3.5s; }
+        .anim .restored { animation: blink 17.5s linear infinite; animation-delay: 14s; }
+        @keyframes blink {
+            0%, 6%   { opacity: 0 }
+            9%, 18%  { opacity: 1 }
+            20%,100% { opacity: 0 }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .anim .scene, .anim .vanish, .anim .restored { animation: none; }
+            .anim .scene { opacity: 0; }
+            .anim .scene[style*="--i:0"] { opacity: 1; }
+        }
         .tiers h2:not(:first-child) { margin-top: 28px; }
         .soon { font-weight: normal; font-size: 12px; color: #666; border: 1px solid rgb(233, 233, 233); padding: 1px 6px; margin-left: 6px; vertical-align: middle; }
 
@@ -163,29 +192,77 @@
 
         <section class="tiers">
             <h2>Free</h2>
-            <svg class="diagram" viewBox="0 0 440 120" role="img" aria-label="Your iPhone connected by cable to your Mac, the only thing that can unblock it">
+            <svg class="diagram anim" viewBox="0 0 440 200" role="img"
+                 aria-label="Plug the iPhone into your Mac, an app disappears from it, you go about your day, then you plug in again to get the app back.">
                 <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <!-- phone -->
-                    <rect x="52" y="14" width="26" height="46" rx="4"/>
-                    <line x1="61" y1="54" x2="69" y2="54"/>
-                    <!-- cable -->
-                    <line x1="86" y1="37" x2="262" y2="37"/>
-                    <rect x="80" y="33" width="8" height="8" rx="1"/>
-                    <rect x="260" y="33" width="8" height="8" rx="1"/>
-                    <!-- mac -->
-                    <rect x="282" y="16" width="56" height="34" rx="3"/>
-                    <line x1="274" y1="56" x2="346" y2="56"/>
-                    <!-- key on the mac -->
-                    <circle cx="298" cy="33" r="5"/>
-                    <line x1="302" y1="36" x2="318" y2="46"/>
-                    <line x1="312" y1="43" x2="309" y2="47"/>
-                    <line x1="316" y1="45" x2="313" y2="49"/>
-                </g>
-                <g font-size="12" fill="#333" text-anchor="middle">
-                    <text x="65" y="82">your iPhone</text>
-                    <text x="174" y="30" fill="#666">cable</text>
-                    <text x="310" y="82">your Mac</text>
-                    <text x="310" y="98" fill="#666">can unblock</text>
+
+                    <!-- 1. Plug it in -->
+                    <g class="scene" style="--i:0">
+                        <circle cx="58" cy="62" r="9"/>
+                        <path d="M58 71 v26"/>
+                        <path d="M58 78 l-13 9 M58 78 l16 6"/>
+                        <path d="M58 97 l-9 24 M58 97 l9 24"/>
+                        <rect x="78" y="78" width="20" height="34" rx="3"/>
+                        <path d="M100 95 C 150 95, 200 128, 262 112" stroke-dasharray="0"/>
+                        <rect x="296" y="56" width="66" height="42" rx="3"/>
+                        <path d="M286 104 h86"/>
+                        <rect x="258" y="108" width="8" height="8" rx="1"/>
+                        <text class="cap" x="220" y="160">Plug in your iPhone</text>
+                    </g>
+
+                    <!-- 2. An app disappears -->
+                    <g class="scene" style="--i:1">
+                        <rect x="186" y="42" width="68" height="106" rx="9"/>
+                        <path d="M210 138 h20"/>
+                        <rect x="196" y="56" width="16" height="16" rx="4"/>
+                        <rect x="228" y="56" width="16" height="16" rx="4"/>
+                        <rect x="196" y="80" width="16" height="16" rx="4"/>
+                        <rect class="vanish" x="228" y="80" width="16" height="16" rx="4" stroke-dasharray="3 3"/>
+                        <path class="vanish" d="M250 74 l7 -6 M254 84 l9 0 M250 92 l7 6"/>
+                        <rect x="196" y="104" width="16" height="16" rx="4"/>
+                        <rect x="228" y="104" width="16" height="16" rx="4"/>
+                        <text class="cap" x="220" y="176">Pick the apps. They disappear.</text>
+                    </g>
+
+                    <!-- 3. Go about your day -->
+                    <g class="scene" style="--i:2">
+                        <circle cx="120" cy="52" r="11"/>
+                        <path d="M120 56 l0 -8 M120 56 l-8 -6 M120 56 l8 -6 M132 52 l8 0 M108 52 l-8 0 M120 66 l0 8"/>
+                        <circle cx="206" cy="70" r="9"/>
+                        <path d="M206 79 v26"/>
+                        <path d="M206 86 l-14 7 M206 86 l14 7"/>
+                        <path d="M206 105 l-11 24 M206 105 l12 22"/>
+                        <path d="M300 130 v-34 M300 96 l-14 -16 M300 96 l14 -16 M300 110 l-12 -14 M300 110 l12 -14"/>
+                        <path d="M120 148 h200" stroke-dasharray="2 6"/>
+                        <text class="cap" x="220" y="176">Go about your day</text>
+                    </g>
+
+                    <!-- 4. Want it back? -->
+                    <g class="scene" style="--i:3">
+                        <circle cx="250" cy="70" r="9"/>
+                        <path d="M250 79 v26"/>
+                        <path d="M250 86 l14 7 M250 86 l-14 7"/>
+                        <path d="M250 105 l11 24 M250 105 l-12 22"/>
+                        <path d="M118 74 h56 M118 74 l12 -11 M118 74 l12 11"/>
+                        <rect x="56" y="56" width="50" height="34" rx="3"/>
+                        <path d="M48 96 h66"/>
+                        <text class="cap" x="220" y="176">Want it back?</text>
+                    </g>
+
+                    <!-- 5. Plug in again -->
+                    <g class="scene" style="--i:4">
+                        <circle cx="58" cy="62" r="9"/>
+                        <path d="M58 71 v26"/>
+                        <path d="M58 78 l-13 9 M58 78 l16 6"/>
+                        <path d="M58 97 l-9 24 M58 97 l9 24"/>
+                        <rect x="78" y="78" width="20" height="34" rx="3"/>
+                        <rect class="restored" x="83" y="88" width="10" height="10" rx="2.5"/>
+                        <path d="M100 95 C 150 95, 200 128, 262 112"/>
+                        <rect x="296" y="56" width="66" height="42" rx="3"/>
+                        <path d="M286 104 h86"/>
+                        <rect x="258" y="108" width="8" height="8" rx="1"/>
+                        <text class="cap" x="220" y="160">Plug in again — it's back</text>
+                    </g>
                 </g>
             </svg>
             <p><strong>A switch.</strong> Plug in, pick apps, Apply. Only this Mac can unblock them — so unblocking means the cable.</p>
