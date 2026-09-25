@@ -108,10 +108,6 @@
         .tiers h2 { font-size: 16px; font-weight: bold; margin: 0 0 8px; }
         .tiers h2 + p { margin-top: 0; }
         .tiers p { margin: 0 0 10px; }
-        .tiers details { margin: 0 0 6px; }
-        .tiers summary { cursor: pointer; color: #0000EE; font-size: 14px; width: fit-content; }
-        .tiers summary:hover { text-decoration: underline; }
-        .tiers details p { color: #333; font-size: 15px; margin: 8px 0 0; }
         .diagram { display: block; width: 100%; max-width: 440px; height: auto; margin: 6px 0 14px; color: black; }
         .diagram .cap {
             font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -212,7 +208,7 @@
             .paid .pcap2, .paid .pcap3, .paid .pcap4, .paid .pcap5 { opacity: 0; }
         }
         .tiers h2:not(:first-child) { margin-top: 28px; }
-        .soon { font-weight: normal; font-size: 12px; color: #666; border: 1px solid rgb(233, 233, 233); padding: 1px 6px; margin-left: 6px; vertical-align: middle; }
+        .once { font-weight: normal; font-size: 13px; color: #0000EE; margin-left: 8px; vertical-align: middle; }
 
         footer {
             max-width: 480px;
@@ -323,14 +319,8 @@
                     <text class="cap cap3" x="220" y="178">Plug in again — it's back</text>
                 </g>
             </svg>
-            <p><strong>A switch.</strong> Plug in, pick apps, Apply. Only this Mac can unblock them — so unblocking means the cable.</p>
-            <details>
-                <summary>Why it holds</summary>
-                <p>Apple lets exactly one computer manage a supervised phone: the one that set it up. That's your Mac. The phone's own Settings has no remove button. So unblocking means the walk back to your laptop and the cable.</p>
-                <p>No account, and nothing of yours leaves your Mac. If Cable disappears tomorrow, nothing changes.</p>
-            </details>
 
-            <h2>Paid <span class="soon">free during beta</span></h2>
+            <h2>Paid <span class="once">One time payment!</span></h2>
             <svg class="diagram paid" viewBox="0 0 440 190" role="img"
                  aria-label="Instagram is gone from the phone and your Mac can no longer undo it. You ask from the phone, a timer counts down, the password arrives from Cable, you type it in and the app comes back.">
                 <defs>
@@ -396,12 +386,6 @@
                     <text class="cap pcap5" x="220" y="178">Type it in — it's back</text>
                 </g>
             </svg>
-            <p><strong>A lock.</strong> Click Lock and nothing can unblock — not even your Mac — until the delay you chose runs out, or the person you chose says yes.</p>
-            <details>
-                <summary>Why it holds</summary>
-                <p>Lock does two things. It re-installs the block with a password you never see, and it hands your Mac's permission to manage the phone over to Cable. After that, plugging into your Mac does nothing. The only way to unblock is the password, which iOS demands in Settings — and we hand it over only after the delay, or when your person approves. No Mac needed.</p>
-                <p>The one door that always works is erasing the phone. That's Apple's rule, and it's why nothing here can brick a phone.</p>
-            </details>
         </section>
     </main>
 
