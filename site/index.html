@@ -239,7 +239,7 @@
                     <path d="M400 152 v-34 M400 122 l-13 -14 M400 122 l13 -14 M400 134 l-10 -11 M400 134 l10 -11"/>
 
                     <!-- Cable: only there while docked, and it appears and vanishes instantly. -->
-                    <path class="cable" d="M154 138 C 138 150, 116 128, 102 112"/>
+                    <path class="cable" d="M156 142 C 140 152, 118 130, 102 112"/>
                     <rect class="cable" x="98" y="108" width="8" height="8" rx="1"/>
 
                     <!-- Friends, only there while he's outside. -->
@@ -264,9 +264,15 @@
                         <path d="M140 93 v27"/>
                         <path d="M140 100 l-14 9 M140 100 l16 6"/>
                         <path d="M140 120 l-10 26 M140 120 l10 26"/>
-                        <rect x="154" y="102" width="20" height="34" rx="3"/>
-                        <path d="M160 131 h8"/>
-                        <rect class="appicon" x="159" y="110" width="10" height="10" rx="2.5"/>
+                        <rect x="152" y="100" width="24" height="40" rx="4"/>
+                        <path d="M158 134 h12"/>
+                        <!-- Instagram's mark: a rounded square, a lens, a dot. Reads at
+                             this size and makes the app that vanishes recognisable. -->
+                        <g class="appicon">
+                            <rect x="156" y="107" width="16" height="16" rx="4.5"/>
+                            <circle cx="164" cy="115" r="4"/>
+                            <circle cx="168.6" cy="110.4" r="1" fill="currentColor" stroke="none"/>
+                        </g>
                     </g>
 
                     <text class="cap cap1" x="220" y="178">Plug in. Pick the apps.</text>
