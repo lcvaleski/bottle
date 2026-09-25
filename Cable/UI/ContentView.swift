@@ -21,7 +21,8 @@ struct ContentView: View {
         .navigationSubtitle(subtitle)
         .toolbar {
             ToolbarItem(placement: .navigation) {
-                if let device = model.monitor.selectedDevice {
+                if CfgUtil.isInstalled, let device = model.monitor.selectedDevice,
+                   model.wizard(for: device) == nil {
                     StatusChip(kind: DeviceToolbarTitle.kind(for: device, locked: model.lock.isLocked))
                 }
             }
@@ -29,14 +30,6 @@ struct ContentView: View {
                 if model.monitor.devices.count > 1 {
                     DevicePicker()
                 }
-            }
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    model.showLog.toggle()
-                } label: {
-                    Label("Activity", systemImage: model.showLog ? "terminal.fill" : "terminal")
-                }
-                .help("Show exactly what Cable is running (⌘⇧L)")
             }
         }
         .background(WindowConfigurator())
@@ -116,11 +109,11 @@ struct WaitingForPhoneView: View {
 struct ConfiguratorMissingView: View {
     var body: some View {
         ContentUnavailableView {
-            Label("Cable needs Apple Configurator", systemImage: "app.badge.checkmark")
+            Label("Cable needs Apple Configurator", systemImage: "arrow.down.app.fill")
         } description: {
             Text("Apple's own app. It's free.")
         } actions: {
-            Link("Get It", destination: URL(string: "macappstore://apps.apple.com/app/id1037126344")!)
+            Link("Get Apple Configurator", destination: URL(string: "macappstore://apps.apple.com/app/id1037126344")!)
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
         }

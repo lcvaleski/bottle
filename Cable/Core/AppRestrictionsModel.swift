@@ -45,6 +45,7 @@ final class AppRestrictionsModel {
     private(set) var isApplying = false
     private(set) var statusMessage: String?
     private(set) var errorMessage: String?
+    private var saveTask: Task<Void, Never>?
 
     init(device: Device, cfgutil: CfgUtil, identityStore: SupervisionIdentityStore, iconCache: IconCache) {
         ecid = device.ecid
@@ -84,63 +85,43 @@ final class AppRestrictionsModel {
     }
 
     var thirdPartyApps: [InstalledApp] {
-        filteredApps.filter { !$0.isBuiltIn && state(of: $0.bundleID) == .off }
+        let suggested = Set(suggestions.map(\.bundleID))
+        return filteredApps.filter { !$0.isBuiltIn && state(of: $0.bundleID) == .off && !suggested.contains($0.bundleID) }
     }
 
     // MARK: - Live vs. edited
 
     var isActive: Bool { profileInstalled && appliedMode != nil }
 
-    /// Apps the user has ticked that aren't live yet.
-    var pendingAdditions: Set<String> { selected.subtracting(appliedApps) }
-    /// Apps that are live but the user has unticked.
-    var pendingRemovals: Set<String> { appliedApps.subtracting(selected) }
-    var pendingSiteAdditions: [String] { sites.filter { !appliedSites.contains($0) } }
-    var pendingSiteRemovals: [String] { appliedSites.filter { !sites.contains($0) } }
+    /// What the phone is actually enforcing, for the footer.
+    var blockedAppCount: Int { appliedApps.count }
+    var blockedSiteCount: Int { appliedSites.count }
 
-    var hasPendingChanges: Bool {
-        guard isActive else { return !selected.isEmpty || !sites.isEmpty }
-        return !pendingAdditions.isEmpty || !pendingRemovals.isEmpty
-            || !pendingSiteAdditions.isEmpty || !pendingSiteRemovals.isEmpty
-            || appliedMode != mode
-    }
-
-    /// Where an app stands: live, about to change, or untouched.
-    enum RowState { case off, on, willTurnOn, willTurnOff }
+    /// An app is blocked or it isn't. Changes go to the phone on their own.
+    enum RowState { case off, on }
 
     func state(of bundleID: String) -> RowState {
-        let live = isActive && appliedApps.contains(bundleID)
-        let picked = selected.contains(bundleID)
-        switch (live, picked) {
-        case (true, true): return .on
-        case (false, false): return .off
-        case (false, true): return .willTurnOn
-        case (true, false): return .willTurnOff
-        }
+        selected.contains(bundleID) ? .on : .off
     }
 
     func siteState(of host: String) -> RowState {
-        let live = isActive && appliedSites.contains(host)
-        let picked = sites.contains(host)
-        switch (live, picked) {
-        case (true, true): return .on
-        case (false, false): return .off
-        case (false, true): return .willTurnOn
-        case (true, false): return .willTurnOff
-        }
-    }
-
-    /// Throw away edits and go back to what the phone actually has.
-    func revert() {
-        selected = appliedApps
-        sites = appliedSites
-        if let appliedMode { mode = appliedMode }
-        statusMessage = nil
-        errorMessage = nil
+        sites.contains(host) ? .on : .off
     }
 
     func toggle(_ bundleID: String) {
         if selected.contains(bundleID) { selected.remove(bundleID) } else { selected.insert(bundleID) }
+        scheduleSave()
+    }
+
+    /// Clicks come faster than cfgutil can answer, so coalesce them and send
+    /// once the user stops.
+    private func scheduleSave() {
+        saveTask?.cancel()
+        saveTask = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(700))
+            guard !Task.isCancelled else { return }
+            await self?.apply()
+        }
     }
 
     /// Profiles on the phone that Cable didn't install.
@@ -247,10 +228,12 @@ final class AppRestrictionsModel {
         guard let host = RestrictionsProfile.normalizeSite(siteInput) else { return }
         if !sites.contains(host) { sites.append(host) }
         siteInput = ""
+        scheduleSave()
     }
 
     func removeSite(_ host: String) {
         sites.removeAll { $0 == host }
+        scheduleSave()
     }
 
     func apply() async {
@@ -287,6 +270,9 @@ final class AppRestrictionsModel {
                 + (lockedOnPhone ? ". Removable only from this Mac." : ". Removable from the iPhone's Settings.")
         } catch {
             errorMessage = error.localizedDescription
+            // The phone didn't take it, so stop showing it as blocked.
+            selected = appliedApps
+            sites = appliedSites
         }
     }
 

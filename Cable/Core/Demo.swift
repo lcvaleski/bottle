@@ -21,16 +21,15 @@ enum Demo {
         device.name = "Logan’s iPhone"
         device.deviceType = "iPhone16,1"
         device.udid = "00008130-000DEM0DEM0DEM0"
-        device.isSupervised = !(screen == "setup" || isWizard)
-        device.isPaired = screen != "needstrust"
-        if screen == "identity-mismatch" { device.organizationName = "Someone Else, Inc." }
-        device.isPaired = true
         device.activationState = "Activated"
         device.bootedState = "Booted"
         device.productVersion = "26.6.1"
-        device.organizationName = "Coventry Labs, LLC"
         device.batteryLevel = 78
         device.backupWillBeEncrypted = false
+        // Per-screen overrides last, or they get clobbered by the defaults.
+        device.isSupervised = !(screen == "setup" || isWizard)
+        device.isPaired = screen != "needstrust"
+        device.organizationName = screen == "identity-mismatch" ? "Someone Else, Inc." : "Coventry Labs, LLC"
         return device
     }
 

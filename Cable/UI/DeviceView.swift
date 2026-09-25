@@ -9,6 +9,8 @@ struct DeviceView: View {
     var body: some View {
         if let wizard = model.wizard(for: device) {
             SupervisionWizardView(wizard: wizard, device: device)
+        } else if device.isPaired == false {
+            NotTrustedView(device: device)
         } else if device.isSupervised == true {
             if model.identityStore.identity == nil || showIdentitySetup {
                 IdentitySetupView(device: device) { showIdentitySetup = false }
@@ -28,6 +30,20 @@ struct DeviceView: View {
             }
         } else {
             SetUpIntroView(device: device)
+        }
+    }
+}
+
+/// Nothing works until the phone trusts this Mac, so this is its own screen
+/// rather than a disabled button somewhere else.
+struct NotTrustedView: View {
+    let device: Device
+
+    var body: some View {
+        ContentUnavailableView {
+            Label("Unlock \(device.displayName)", systemImage: "hand.raised.fill")
+        } description: {
+            Text("Then tap **Trust** on the iPhone.")
         }
     }
 }

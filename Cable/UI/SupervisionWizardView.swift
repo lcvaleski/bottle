@@ -13,15 +13,21 @@ struct SupervisionWizardView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 heading
-                if wizard.hasStarted {
+                if wizard.isComplete {
+                    doneNextSteps
+                } else if wizard.hasStarted {
                     progress
                 } else {
                     checklist
                     options
                 }
                 if let failure = wizard.failure, wizard.failedStep != nil {
-                    NoticeBanner(tone: .danger, title: "Stopped at “\(wizard.failedStep?.title ?? "")”",
-                                 detail: failure, actionTitle: "Log") { model.showLog = true }
+                    NoticeBanner(
+                        tone: .danger,
+                        title: wizard.skipBackup ? "Stopped" : "Your backup is safe on this Mac",
+                        detail: failure,
+                        actionTitle: "Log"
+                    ) { model.showLog = true }
                 }
             }
             .padding(28)
@@ -46,7 +52,7 @@ struct SupervisionWizardView: View {
     }
 
     private var heading: some View {
-        Text(wizard.hasStarted ? "Setting up \(wizard.deviceName)" : "Three checks")
+        Text(wizard.hasStarted ? "Setting up \(wizard.deviceName)" : "Before we start")
             .font(.largeTitle.weight(.semibold))
     }
 
@@ -74,7 +80,7 @@ struct SupervisionWizardView: View {
     private var options: some View {
         DisclosureGroup("Options", isExpanded: $showOptions) {
             VStack(spacing: 0) {
-                optionRow("Set up as new") {
+                optionRow("Set up as new", detail: "Nothing is restored afterwards") {
                     Toggle("", isOn: $wizard.skipBackup)
                         .toggleStyle(.switch)
                         .labelsHidden()
@@ -102,9 +108,14 @@ struct SupervisionWizardView: View {
         .font(.callout)
     }
 
-    private func optionRow<Control: View>(_ title: String, @ViewBuilder _ control: () -> Control) -> some View {
+    private func optionRow<Control: View>(_ title: String, detail: String? = nil, @ViewBuilder _ control: () -> Control) -> some View {
         HStack {
-            Text(title)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                if let detail {
+                    Text(detail).font(.caption).foregroundStyle(.secondary)
+                }
+            }
             Spacer()
             control()
         }
@@ -127,15 +138,35 @@ struct SupervisionWizardView: View {
         }
     }
 
+    /// After the restore the iPhone is sitting on its Hello screen, so say what
+    /// to do there rather than "finish setup".
+    private var doneNextSteps: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            ForEach(Array(["Tap through Hello on the iPhone", "Sign in to your Apple Account", "Choose “Don’t Transfer Apps & Data”"].enumerated()), id: \.offset) { i, line in
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Text("\(i + 1)")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 20, height: 20)
+                        .background(.quaternary, in: Circle())
+                    Text(line)
+                }
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.quaternary.opacity(0.28), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+    }
+
     // MARK: Controls
 
     private var controls: some View {
         HStack(spacing: 12) {
             if wizard.isComplete {
-                Label("Done — finish setup on the iPhone", systemImage: "checkmark.circle.fill")
+                Label("Done", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
                 Spacer()
-                Button("Continue") { model.endWizard(for: wizard.ecid) }
+                Button("Block Apps") { model.endWizard(for: wizard.ecid) }
                     .buttonStyle(.borderedProminent)
             } else if wizard.isRunning {
                 HStack(spacing: 8) {
@@ -144,6 +175,7 @@ struct SupervisionWizardView: View {
                 }
                 Spacer()
                 Button("Stop", role: .cancel) { wizard.cancel() }
+                    .disabled(wizard.isPastPointOfNoReturn)
             } else if wizard.failedStep != nil {
                 Spacer()
                 Button("Close") { model.endWizard(for: wizard.ecid) }
@@ -152,7 +184,7 @@ struct SupervisionWizardView: View {
             } else {
                 Spacer()
                 Button("Cancel") { model.endWizard(for: wizard.ecid) }
-                Button("Begin") { confirmErase = true }
+                Button("Erase \(wizard.deviceName)") { confirmErase = true }
                     .buttonStyle(.borderedProminent)
                     .disabled(!wizard.canStart)
             }

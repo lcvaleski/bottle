@@ -106,6 +106,13 @@ final class SupervisionWizard {
 
     var failedStep: Step? { steps.first { $0.status == .failed } }
 
+    /// Once the erase has started there is nothing to stop — the phone is going
+    /// to come back empty either way, so stopping only strands it.
+    var isPastPointOfNoReturn: Bool {
+        guard let running = steps.first(where: { $0.status == .running }) else { return false }
+        return [.erase, .reconnect, .prepare, .restore].contains(running.id)
+    }
+
     func start() { start(from: .identity) }
 
     func retry() {

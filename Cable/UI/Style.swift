@@ -84,74 +84,42 @@ struct AppIconView: View {
     }
 }
 
-/// One app in the grid. Icon-led: the icon is the whole control, and blocking
-/// draws a border around it. A name only appears when there's no icon to show,
-/// so a tile is never unidentifiable.
+/// One app in the grid. Icon-led, with its name underneath so a wall of icons
+/// is still scannable. Blocked reads as settled — dimmed with a small lock —
+/// not as an error; red is kept for things that actually went wrong.
 struct AppTile: View {
     let image: NSImage?
     let name: String
     let state: AppRestrictionsModel.RowState
-    let blocking: Bool
-    var side: CGFloat = 72
+    var side: CGFloat = 60
 
-    private var ring: (color: Color, dashed: Bool)? {
-        switch state {
-        case .off: nil
-        case .on: (blocking ? .red : .green, false)
-        case .willTurnOn: (.orange, false)
-        case .willTurnOff: (.orange, true)
-        }
-    }
+    private var isBlocked: Bool { state == .on }
 
     var body: some View {
-        VStack(spacing: 4) {
-            ZStack {
-                AppIconView(image: image, side: side, isBlocked: blocking && state == .on)
-                if let ring {
-                    RoundedRectangle(cornerRadius: (side + 10) * 0.235, style: .continuous)
-                        .strokeBorder(
-                            ring.color,
-                            style: StrokeStyle(lineWidth: 2.5, dash: ring.dashed ? [4, 3] : [])
-                        )
-                        .frame(width: side + 10, height: side + 10)
+        VStack(spacing: 5) {
+            ZStack(alignment: .bottomTrailing) {
+                AppIconView(image: image, side: side, isBlocked: isBlocked)
+                    .opacity(isBlocked ? 0.45 : 1)
+                if isBlocked {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(4)
+                        .background(Circle().fill(.secondary))
+                        .overlay(Circle().strokeBorder(Color(nsColor: .windowBackgroundColor), lineWidth: 1.5))
+                        .offset(x: 3, y: 3)
                 }
             }
-            .frame(width: side + 14, height: side + 14)
+            .frame(width: side, height: side)
 
-            if image == nil {
-                Text(name)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .frame(width: side + 14)
-            }
+            Text(name)
+                .font(.caption2)
+                .foregroundStyle(isBlocked ? .tertiary : .secondary)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(width: side + 18)
         }
         .animation(.snappy(duration: 0.18), value: state)
-    }
-}
-
-/// State for rows that stay textual (websites), where a tile makes no sense.
-struct StateBadge: View {
-    let state: AppRestrictionsModel.RowState
-    let blocking: Bool
-
-    var body: some View {
-        if let (text, color) = label {
-            Text(text)
-                .font(.caption.weight(.medium))
-                .foregroundStyle(color)
-                .animation(.snappy(duration: 0.18), value: state)
-        }
-    }
-
-    private var label: (String, Color)? {
-        switch state {
-        case .off: nil
-        case .on: (blocking ? "Blocked" : "Allowed", blocking ? .red : .green)
-        case .willTurnOn: (blocking ? "Will block" : "Will allow", .orange)
-        case .willTurnOff: ("Will undo", .orange)
-        }
     }
 }
 

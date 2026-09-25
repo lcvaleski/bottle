@@ -39,9 +39,9 @@ struct LockSheet: View {
                     .font(.system(size: 28))
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(.blue)
-                Text("Lock it")
+                Text("Lock \(device.displayName)")
                     .font(.title2.weight(.semibold))
-                Text("After this, not even this Mac can unblock.")
+                Text("To unblock you'll ask from the iPhone, then wait. Cable puts the page on its Home Screen.")
                     .foregroundStyle(.secondary)
             }
             .padding(24)
@@ -50,7 +50,7 @@ struct LockSheet: View {
 
             VStack(spacing: 0) {
                 row {
-                    Text("Wait to unblock")
+                    Text("Wait after asking")
                     Spacer()
                     Picker("", selection: $delayHours) {
                         ForEach(delays, id: \.1) { Text($0.0).tag($0.1) }
@@ -60,7 +60,7 @@ struct LockSheet: View {
                 }
                 Divider().padding(.leading, 24)
                 row {
-                    Text("Someone can approve sooner")
+                    Text("Let someone approve sooner")
                     Spacer()
                     Toggle("", isOn: $partner)
                         .toggleStyle(.switch)

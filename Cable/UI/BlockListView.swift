@@ -122,7 +122,7 @@ struct BlockListView: View {
                         apps: model.suggestions
                     ) {
                         HStack(spacing: 6) {
-                            Button("Add All") { model.acceptAllSuggestions() }
+                            Button("Block All") { model.acceptAllSuggestions() }
                                 .controlSize(.small)
                             Button {
                                 withAnimation { model.showSuggestions = false }
@@ -144,7 +144,7 @@ struct BlockListView: View {
                 }
                 if !model.thirdPartyApps.isEmpty {
                     gridSection(
-                        title: model.chosenApps.isEmpty ? "Your apps" : "Everything else",
+                        title: "Your apps",
                         count: model.thirdPartyApps.count,
                         apps: model.thirdPartyApps
                     )
@@ -182,7 +182,7 @@ struct BlockListView: View {
                 Spacer()
                 accessory()
             }
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 12)], alignment: .leading, spacing: 16) {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 88), spacing: 12)], alignment: .leading, spacing: 16) {
                 ForEach(apps) { appTile($0) }
             }
         }
@@ -194,12 +194,7 @@ struct BlockListView: View {
         return Button {
             model.toggle(app.bundleID)
         } label: {
-            AppTile(
-                image: model.iconCache.image(for: app.bundleID),
-                name: app.name,
-                state: state,
-                blocking: model.mode == .block
-            )
+            AppTile(image: model.iconCache.image(for: app.bundleID), name: app.name, state: state)
         }
         .buttonStyle(.plain)
         .help(blockedElsewhere.map { "\(app.name) — already blocked by “\($0)”" } ?? app.name)
@@ -248,10 +243,11 @@ struct BlockListView: View {
                 TextField("instagram.com", text: $model.siteInput)
                     .textFieldStyle(.roundedBorder)
                     .onSubmit { model.addSite() }
-                Button("Add") { model.addSite() }
+                Button("Block") { model.addSite() }
                     .disabled(RestrictionsProfile.normalizeSite(model.siteInput) == nil)
             }
             .padding(16)
+            Divider()
 
             if model.sites.isEmpty {
                 ContentUnavailableView {
@@ -261,8 +257,7 @@ struct BlockListView: View {
                 }
             } else {
                 List {
-                    Section { ForEach(model.sites, id: \.self) { siteRow($0) } }
-                        header: { ListSectionHeader(title: "Blocked websites", count: model.sites.count) }
+                    ForEach(model.sites, id: \.self) { siteRow($0) }
                 }
                 .listStyle(.inset)
             }
@@ -271,14 +266,13 @@ struct BlockListView: View {
 
     private func siteRow(_ host: String) -> some View {
         HStack(spacing: 11) {
-            Image(systemName: "globe")
-                .font(.system(size: 18))
+            Image(systemName: "lock.fill")
+                .font(.system(size: 13))
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(.secondary)
                 .frame(width: 32)
             Text(host)
             Spacer(minLength: 8)
-            StateBadge(state: model.siteState(of: host), blocking: model.mode == .block)
             Button {
                 model.removeSite(host)
             } label: {
@@ -299,50 +293,28 @@ struct BlockListView: View {
             statusLine
             Spacer(minLength: 12)
 
-            if model.hasPendingChanges {
-                Button("Revert") { model.revert() }
-                    .disabled(model.isApplying)
-                Button(applyTitle) { Task { await model.apply() } }
-                    .buttonStyle(.borderedProminent)
-                    .keyboardShortcut(.return, modifiers: .command)
-                    .disabled(model.isApplying || (model.mode == .allow && model.selected.isEmpty && model.sites.isEmpty))
-            } else if model.isActive {
-                Button("Unblock Everything") { confirmRemove = true }
-                    .disabled(model.isApplying)
+            Menu {
+                Button("Refresh") { Task { await model.load() } }
+                Divider()
+                Button("Unblock Everything…", role: .destructive) { confirmRemove = true }
+                    .disabled(!model.isActive)
+            } label: {
+                Image(systemName: "ellipsis")
+            }
+            .menuStyle(.borderlessButton)
+            .fixedSize()
+
+            if !appModel.lock.isLocked {
                 Button {
                     showLockSheet = true
                 } label: {
                     Label("Lock…", systemImage: "lock.fill")
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(model.isApplying)
-            } else {
-                Button {
-                    Task { await model.load() }
-                } label: {
-                    Label("Refresh", systemImage: "arrow.clockwise")
-                }
-                .disabled(model.isLoading)
+                .disabled(model.selected.isEmpty && model.sites.isEmpty)
             }
         }
         .bottomBar()
-    }
-
-    private var applyTitle: String {
-        let adds = model.pendingAdditions.count + model.pendingSiteAdditions.count
-        let removes = model.pendingRemovals.count + model.pendingSiteRemovals.count
-        if model.isActive && adds == 0 && removes > 0 { return "Apply · Unblock \(removes)" }
-        if !model.isActive { return model.mode == .block ? "Block \(adds) Item\(adds == 1 ? "" : "s")" : "Apply" }
-        return "Apply Changes"
-    }
-
-    private var pendingSummary: String {
-        let adds = model.pendingAdditions.count + model.pendingSiteAdditions.count
-        let removes = model.pendingRemovals.count + model.pendingSiteRemovals.count
-        var parts: [String] = []
-        if adds > 0 { parts.append("\(adds) to \(model.mode == .block ? "block" : "allow")") }
-        if removes > 0 { parts.append("\(removes) to undo") }
-        return parts.joined(separator: " · ") + " — not applied yet"
     }
 
     @ViewBuilder
@@ -350,25 +322,24 @@ struct BlockListView: View {
         if model.isApplying {
             HStack(spacing: 7) {
                 ProgressView().controlSize(.small)
-                Text("Sending…").foregroundStyle(.secondary)
+                Text("Saving…").foregroundStyle(.secondary)
             }
-        } else if let status = model.statusMessage, !model.hasPendingChanges {
-            Label(status, systemImage: "checkmark.circle.fill")
-                .foregroundStyle(.green)
-                .lineLimit(1)
-        } else if model.hasPendingChanges {
-            Label(pendingSummary, systemImage: "circle.inset.filled")
-                .foregroundStyle(.orange)
-                .lineLimit(1)
         } else if model.isActive {
-            let n = model.appliedApps.count + model.appliedSites.count
-            Label("\(n) blocked", systemImage: "shield.fill")
+            Label(blockedSummary, systemImage: "lock.fill")
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
         } else {
-            Text("Pick what to block.")
+            Text("Click an app to block it.")
                 .foregroundStyle(.secondary)
         }
+    }
+
+    private var blockedSummary: String {
+        var parts: [String] = []
+        let apps = model.blockedAppCount, sites = model.blockedSiteCount
+        if apps > 0 { parts.append("\(apps) app\(apps == 1 ? "" : "s")") }
+        if sites > 0 { parts.append("\(sites) site\(sites == 1 ? "" : "s")") }
+        return parts.isEmpty ? "Nothing blocked" : parts.joined(separator: " · ") + " blocked"
     }
 }
 
