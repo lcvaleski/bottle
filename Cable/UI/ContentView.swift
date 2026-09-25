@@ -85,7 +85,7 @@ struct DetailView: View {
     var body: some View {
         if !CfgUtil.isInstalled {
             ConfiguratorMissingView()
-        } else if model.lock.isLocked {
+        } else if model.lock.isLocked && !Demo.screen(is: "lock-done") {
             LockedView(device: model.monitor.selectedDevice)
         } else if let device = model.monitor.selectedDevice {
             DeviceView(device: device)

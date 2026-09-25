@@ -6,16 +6,24 @@ import Foundation
 enum Demo {
     static let isOn = ProcessInfo.processInfo.environment["CABLE_DEMO"] == "1"
 
-    /// Opens a screen straight away so it can be reviewed without clicking
-    /// around: CABLE_DEMO_SCREEN=lock | locked | setup | wizard
-    static var screen: String? { ProcessInfo.processInfo.environment["CABLE_DEMO_SCREEN"] }
+    /// Jumps straight to one state so every screen can be reviewed and
+    /// screenshotted without clicking around. See `scripts/screens.sh` for the
+    /// full list.
+    static var screen: String { ProcessInfo.processInfo.environment["CABLE_DEMO_SCREEN"] ?? "apps-blocked" }
+
+    static func screen(is name: String) -> Bool { screen == name }
+    static var isWizard: Bool { screen.hasPrefix("wizard") }
+    static var isIdentity: Bool { screen.hasPrefix("identity") }
+    static var isSites: Bool { screen.hasPrefix("sites") }
 
     static var device: Device {
         var device = Device(ecid: "0xDEM0")
         device.name = "Logan’s iPhone"
         device.deviceType = "iPhone16,1"
         device.udid = "00008130-000DEM0DEM0DEM0"
-        device.isSupervised = (screen != "setup" && screen != "wizard")
+        device.isSupervised = !(screen == "setup" || isWizard)
+        device.isPaired = screen != "needstrust"
+        if screen == "identity-mismatch" { device.organizationName = "Someone Else, Inc." }
         device.isPaired = true
         device.activationState = "Activated"
         device.bootedState = "Booted"

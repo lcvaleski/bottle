@@ -186,3 +186,18 @@ struct SuggestionsTests {
         #expect(Set(Suggestions.usualSuspects).count == Suggestions.usualSuspects.count)
     }
 }
+
+struct SuggestionOverlapTests {
+    /// An app being unblocked is still live on the phone, so it must not also be
+    /// offered as a suggestion — it would appear twice in the same list.
+    @Test func liveAppsAreNeverSuggested() {
+        let apps = [
+            InstalledApp(bundleID: "com.reddit.Reddit", name: "Reddit", isBuiltIn: false),
+            InstalledApp(bundleID: "com.burbn.instagram", name: "Instagram", isBuiltIn: false),
+        ]
+        let live: Set<String> = ["com.reddit.Reddit"]
+        let ticked: Set<String> = []
+        let result = Suggestions.build(apps: apps, excluding: ticked.union(live))
+        #expect(result.map(\.bundleID) == ["com.burbn.instagram"])
+    }
+}

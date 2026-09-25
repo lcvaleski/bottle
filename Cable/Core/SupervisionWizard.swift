@@ -49,11 +49,11 @@ final class SupervisionWizard {
     var confirmedTrusted = false
     var confirmedErase = false
 
-    private(set) var steps: [Step] = StepID.allCases.map { Step(id: $0) }
-    private(set) var hasStarted = false
-    private(set) var isRunning = false
-    private(set) var isComplete = false
-    private(set) var failure: String?
+    fileprivate(set) var steps: [Step] = StepID.allCases.map { Step(id: $0) }
+    fileprivate(set) var hasStarted = false
+    fileprivate(set) var isRunning = false
+    fileprivate(set) var isComplete = false
+    fileprivate(set) var failure: String?
 
     private let cfgutil: CfgUtil
     private let identityStore: SupervisionIdentityStore
@@ -66,6 +66,37 @@ final class SupervisionWizard {
         self.cfgutil = cfgutil
         self.identityStore = identityStore
         organizationName = identityStore.identity?.organizationName ?? "Cable"
+    }
+
+    /// Demo-only: pose the wizard mid-run, failed, or finished.
+    func poseForDemo(_ screen: String) {
+        confirmedFindMyOff = true
+        confirmedTrusted = true
+        confirmedErase = true
+        func mark(_ upTo: Int, running: Int? = nil, failed: Int? = nil) {
+            hasStarted = true
+            for (i, step) in steps.enumerated() {
+                if i < upTo { steps[i].status = .done }
+                if i == running { steps[i].status = .running }
+                if i == failed { steps[i].status = .failed }
+                _ = step
+            }
+        }
+        switch screen {
+        case "wizard-running":
+            mark(2, running: 2)
+            steps[2].detail = "Keep the iPhone unlocked"
+            isRunning = true
+        case "wizard-failed":
+            mark(3, failed: 3)
+            steps[3].detail = "The iPhone didn't come back. Unlock it, plug it in again, and retry."
+            failure = "The iPhone didn't come back. Unlock it, plug it in again, and retry."
+        case "wizard-done":
+            mark(steps.count)
+            isComplete = true
+        default:
+            break
+        }
     }
 
     var canStart: Bool {

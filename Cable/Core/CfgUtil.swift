@@ -45,7 +45,8 @@ final class CfgUtil {
     static let executableURL = URL(fileURLWithPath: "/Applications/Apple Configurator.app/Contents/MacOS/cfgutil")
 
     static var isInstalled: Bool {
-        Demo.isOn || FileManager.default.isExecutableFile(atPath: executableURL.path)
+        if Demo.isOn { return !Demo.screen(is: "noconfigurator") }
+        return FileManager.default.isExecutableFile(atPath: executableURL.path)
     }
 
     let log: ActivityLog

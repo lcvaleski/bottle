@@ -22,6 +22,21 @@ final class AppModel {
         iconCache = IconCache(cfgutil: cfgutil)
         lock = LockModel(cfgutil: cfgutil, identityStore: identityStore)
         if lock.isLocked && !Demo.isOn { lock.startPolling() }
+        if Demo.isOn {
+            showLog = Demo.screen(is: "log")
+            if Demo.isWizard {
+                let wizard = SupervisionWizard(device: Demo.device, cfgutil: cfgutil, identityStore: identityStore)
+                wizard.poseForDemo(Demo.screen)
+                wizards[Demo.device.ecid] = wizard
+                if Demo.screen(is: "wizard-checks") || Demo.screen(is: "wizard-options") { wizard.confirmedErase = false }
+            }
+            if Demo.screen(is: "log") {
+                log.command("cfgutil --format JSON --timeout 5 -e 0x8294E3A41001C get installedApps")
+                log.append(.stdout, #"{"Command":"get","Output":{"0x8294E3A41001C":{"installedApps":[…136 apps…]}},"Type":"CommandOutput"}"#)
+                log.command("cfgutil --format JSON -C cert.der -K key.der -e 0x8294E3A41001C install-profile /tmp/cable.mobileconfig")
+                log.info("Applied — 3 apps blocked, 2 sites blocked")
+            }
+        }
     }
 
     func adoptIdentity(_ identity: SupervisionIdentity) {

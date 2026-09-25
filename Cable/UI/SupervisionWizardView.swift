@@ -7,6 +7,7 @@ struct SupervisionWizardView: View {
     @Bindable var wizard: SupervisionWizard
     let device: Device
     @State private var confirmErase = false
+    @State private var showOptions = Demo.isOn && Demo.screen(is: "wizard-options")
 
     var body: some View {
         ScrollView {
@@ -71,37 +72,43 @@ struct SupervisionWizardView: View {
     }
 
     private var options: some View {
-        DisclosureGroup("Options") {
+        DisclosureGroup("Options", isExpanded: $showOptions) {
             VStack(spacing: 0) {
-                Toggle(isOn: $wizard.skipBackup) {
-                    Text("Set up as new")
+                optionRow("Set up as new") {
+                    Toggle("", isOn: $wizard.skipBackup)
+                        .toggleStyle(.switch)
+                        .labelsHidden()
                 }
-                .toggleStyle(.switch)
-                .padding(.vertical, 10)
-
                 if !wizard.skipBackup, device.backupWillBeEncrypted == true {
                     Divider()
-                    LabeledContent("Backup password") {
+                    optionRow("Backup password") {
                         SecureField("", text: $wizard.backupPassword)
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 160)
                     }
-                    .padding(.vertical, 10)
                 }
-
                 if model.identityStore.identity == nil {
                     Divider()
-                    LabeledContent("Organization") {
+                    optionRow("Organization") {
                         TextField("", text: $wizard.organizationName)
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 160)
                     }
-                    .padding(.vertical, 10)
                 }
             }
-            .padding(.top, 4)
+            .padding(.top, 6)
+            .frame(maxWidth: .infinity)
         }
         .font(.callout)
+    }
+
+    private func optionRow<Control: View>(_ title: String, @ViewBuilder _ control: () -> Control) -> some View {
+        HStack {
+            Text(title)
+            Spacer()
+            control()
+        }
+        .padding(.vertical, 10)
     }
 
     // MARK: During

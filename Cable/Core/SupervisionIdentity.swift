@@ -41,6 +41,7 @@ final class SupervisionIdentityStore {
     init() {
         Self.migrateFromOldAppName()
         if Demo.isOn {
+            if Demo.isIdentity && Demo.screen != "identity-mismatch" { identity = nil; return }
             identity = SupervisionIdentity(
                 certificateURL: Self.directory.appendingPathComponent("demo-cert.der"),
                 privateKeyURL: Self.directory.appendingPathComponent("demo-key.der"),
@@ -111,6 +112,7 @@ final class SupervisionIdentityStore {
     /// Identities Apple Configurator made (Settings → Organizations). Their labels look like
     /// "Apple Configurator: Acme Inc (UUID)".
     static func keychainIdentities() -> [KeychainIdentity] {
+        if Demo.isOn && Demo.screen(is: "identity-none") { return [] }
         let query: [String: Any] = [
             kSecClass as String: kSecClassIdentity,
             kSecMatchSubjectContains as String: "Apple Configurator:",

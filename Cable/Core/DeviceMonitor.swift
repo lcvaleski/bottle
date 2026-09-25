@@ -38,6 +38,7 @@ final class DeviceMonitor {
 
     func refresh(force: Bool = false) async {
         if Demo.isOn {
+            if Demo.screen(is: "nophone") { devices = []; selectedECID = nil; return }
             if devices.isEmpty { devices = [Demo.device] }
             if selectedECID == nil { selectedECID = devices.first?.ecid }
             return

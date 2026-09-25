@@ -32,7 +32,10 @@ struct BlockListView: View {
         }
         .task {
             await model.load()
-            if Demo.screen == "lock" { showLockSheet = true }
+            if Demo.isOn {
+                if Demo.screen(is: "lock") || Demo.screen(is: "lock-done") { showLockSheet = true }
+                if Demo.isSites { tab = .websites }
+            }
         }
         .confirmationDialog("Unblock everything on this iPhone?", isPresented: $confirmRemove, titleVisibility: .visible) {
             Button("Unblock Everything", role: .destructive) { Task { await model.removeRestrictions() } }

@@ -64,7 +64,9 @@ final class AppRestrictionsModel {
 
     var suggestions: [InstalledApp] {
         guard showSuggestions else { return [] }
-        return Suggestions.build(apps: apps, excluding: selected)
+        // Exclude what's live on the phone as well as what's ticked, or an app
+        // being unblocked would show up as a suggestion and as blocked at once.
+        return Suggestions.build(apps: apps, excluding: selected.union(appliedApps))
     }
 
     func acceptAllSuggestions() {
@@ -162,14 +164,40 @@ final class AppRestrictionsModel {
     func load() async {
         if Demo.isOn {
             apps = Demo.apps.sorted { ($0.isBuiltIn ? 0 : 1, $0.name.lowercased()) < ($1.isBuiltIn ? 0 : 1, $1.name.lowercased()) }
-            profiles = [Demo.otherProfile, InstalledProfile(identifier: RestrictionsProfile.identifier, displayName: "Cable App Restrictions")]
-            profileInstalled = true
-            appliedMode = .block
-            appliedApps = Demo.blockedApps
-            appliedSites = Demo.blockedSites
-            selected = Demo.blockedApps
-            sites = Demo.blockedSites
             mode = .block
+            switch Demo.screen {
+            case "apps-fresh", "sites-empty":
+                profiles = []
+                profileInstalled = false
+                appliedMode = nil
+                appliedApps = []
+                appliedSites = []
+                selected = []
+                sites = []
+            case "apps-pending":
+                profiles = [InstalledProfile(identifier: RestrictionsProfile.identifier, displayName: "Cable")]
+                profileInstalled = true
+                appliedMode = .block
+                appliedApps = Demo.blockedApps
+                appliedSites = Demo.blockedSites
+                selected = Demo.blockedApps.union(["com.burbn.instagram"]).subtracting(["com.reddit.Reddit"])
+                sites = Demo.blockedSites
+            case "apps-search":
+                profiles = []
+                profileInstalled = false
+                appliedMode = nil
+                selected = []
+                sites = []
+                search = "zzzz"
+            default:
+                profiles = [Demo.otherProfile, InstalledProfile(identifier: RestrictionsProfile.identifier, displayName: "Cable")]
+                profileInstalled = true
+                appliedMode = .block
+                appliedApps = Demo.blockedApps
+                appliedSites = Demo.blockedSites
+                selected = Demo.blockedApps
+                sites = Demo.blockedSites
+            }
             return
         }
         guard !isLoading else { return }

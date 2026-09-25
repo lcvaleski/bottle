@@ -16,7 +16,7 @@ final class LockModel {
     private(set) var isWorking = false
     private(set) var progress: String?
     private(set) var errorMessage: String?
-    private(set) var lastCreated: LockService.Created?
+    fileprivate(set) var lastCreated: LockService.Created?
 
     private let service = LockService()
     private let cfgutil: CfgUtil
@@ -27,18 +27,28 @@ final class LockModel {
         self.cfgutil = cfgutil
         self.identityStore = identityStore
         record = LockRecord.load()
-        if Demo.screen == "locked" {
+        if ["locked", "unlocking", "released", "lock-done"].contains(Demo.screen) {
+            let now = Date().timeIntervalSince1970 * 1000
             record = LockRecord(
-                id: "demolockid0000000000", token: "demo", statusURL: "https://corephone.org/l/demolockid0000000000#demo",
-                approverURL: nil, delayHours: 24, createdAt: Date(), deviceUDID: Demo.device.udid, deviceName: Demo.device.displayName
+                id: "demolockid0000000000", token: "demo",
+                statusURL: "https://cableblocker.com/l/demolockid0000000000#demo",
+                approverURL: Demo.screen == "lock-done" ? "https://cableblocker.com/a/demolockid0000000000#demo" : nil,
+                delayHours: 24, createdAt: Date(), deviceUDID: Demo.device.udid, deviceName: Demo.device.displayName
             )
+            let state = Demo.screen == "locked" || Demo.screen == "lock-done" ? "locked" : Demo.screen
             status = LockService.LockStatus(
-                id: "demolockid0000000000", state: "unlocking", delayHours: 24,
-                createdAt: Date().timeIntervalSince1970 * 1000,
-                unlockRequestedAt: Date().timeIntervalSince1970 * 1000,
-                unlockAt: Date().addingTimeInterval(6 * 3600 + 132).timeIntervalSince1970 * 1000,
-                releasedAt: nil, hasIdentity: true, hasApprover: false, password: nil, identity: nil
+                id: "demolockid0000000000", state: state, delayHours: 24, createdAt: now,
+                unlockRequestedAt: state == "locked" ? nil : now,
+                unlockAt: state == "unlocking" ? Date().addingTimeInterval(6 * 3600 + 132).timeIntervalSince1970 * 1000 : nil,
+                releasedAt: state == "released" ? now : nil,
+                hasIdentity: true, hasApprover: Demo.screen == "lock-done", password: nil, identity: nil
             )
+            if Demo.screen == "lock-done" {
+                lastCreated = LockService.Created(
+                    id: "demolockid0000000000", token: "demo", password: "yeeuyyh4xe",
+                    statusUrl: record!.statusURL, approverUrl: record!.approverURL
+                )
+            }
         }
     }
 
