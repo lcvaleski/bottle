@@ -34,16 +34,15 @@ struct LockSheet: View {
 
     private var form: some View {
         VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 7) {
                 Image(systemName: "lock.fill")
-                    .font(.system(size: 30))
+                    .font(.system(size: 28))
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(.blue)
-                Text("Make this stick")
+                Text("Lock it")
                     .font(.title2.weight(.semibold))
-                Text("Right now you can undo the block from this Mac in one click. Locking takes that away: unblocking will need a wait you choose\(partner ? ", or a yes from the person you pick" : "").")
+                Text("After this, not even this Mac can unblock.")
                     .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding(24)
 
@@ -51,59 +50,41 @@ struct LockSheet: View {
 
             VStack(spacing: 0) {
                 row {
-                    Text("Wait before unblocking")
+                    Text("Wait to unblock")
                     Spacer()
                     Picker("", selection: $delayHours) {
                         ForEach(delays, id: \.1) { Text($0.0).tag($0.1) }
                     }
                     .labelsHidden()
-                    .frame(width: 140)
+                    .frame(width: 130)
                 }
                 Divider().padding(.leading, 24)
                 row {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Let someone approve early")
-                        Text("You get a private link to send them. It's shown once.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+                    Text("Someone can approve sooner")
                     Spacer()
                     Toggle("", isOn: $partner)
                         .toggleStyle(.switch)
                         .labelsHidden()
-                }
-                Divider().padding(.leading, 24)
-                row {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Locking now")
-                        Text(summary)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
                 }
             }
 
             Divider()
 
             VStack(alignment: .leading, spacing: 12) {
-                afterLockExplainer
-
                 if let error = model.lock.errorMessage {
-                    NoticeBanner(tone: .danger, title: "Couldn't lock", detail: error)
+                    NoticeBanner(tone: .danger, title: error)
                 }
-
                 HStack(spacing: 9) {
                     if model.lock.isWorking {
                         ProgressView().controlSize(.small)
-                        Text(model.lock.progress ?? "Working…")
+                        Text(model.lock.progress ?? "")
                             .font(.callout)
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
                     Button("Cancel") { dismiss() }
                         .disabled(model.lock.isWorking)
-                    Button("Lock \(device.displayName)") {
+                    Button("Lock") {
                         Task {
                             await model.lock.lock(device: device, restrictions: restrictions,
                                                   delayHours: delayHours, partner: partner)
@@ -123,45 +104,6 @@ struct LockSheet: View {
             .padding(.vertical, 13)
     }
 
-    private var summary: String {
-        let apps = restrictions.selected.count
-        let sites = restrictions.sites.count
-        var parts: [String] = []
-        if apps > 0 { parts.append("\(apps) app\(apps == 1 ? "" : "s")") }
-        if sites > 0 { parts.append("\(sites) website\(sites == 1 ? "" : "s")") }
-        let what = parts.isEmpty ? "nothing yet" : parts.joined(separator: " and ")
-        return "\(what), \(restrictions.mode == .block ? "blocked" : "allowed")"
-    }
-
-    private var afterLockExplainer: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            Text("After you lock")
-                .font(.callout.weight(.semibold))
-            bullet("iphone", "You unblock from the iPhone itself — Cable gives you a link to keep on its Home Screen.")
-            bullet("laptopcomputer.slash", "This Mac can't change the block any more, even if you reinstall Cable.")
-            bullet("arrow.counterclockwise", "Erasing the iPhone always works. That's Apple's rule and it's why nothing here can trap you.")
-        }
-        .padding(13)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.quaternary.opacity(0.28), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-    }
-
-    private func bullet(_ symbol: String, _ text: String) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 9) {
-            Image(systemName: symbol)
-                .font(.caption)
-                .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(.secondary)
-                .frame(width: 15)
-            Text(text)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    // MARK: After
-
     private func handoff(_ created: LockService.Created) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 8) {
@@ -171,7 +113,7 @@ struct LockSheet: View {
                     .foregroundStyle(.green)
                 Text("\(device.displayName) is locked")
                     .font(.title2.weight(.semibold))
-                Text("Put this page on your iPhone now. It's where you'll go to unblock, and it's the only place that can.")
+                Text("This page is the only way to unblock.")
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -183,7 +125,7 @@ struct LockSheet: View {
                 QRCodeView(text: created.statusUrl)
                     .frame(width: 128, height: 128)
                 VStack(alignment: .leading, spacing: 9) {
-                    Text("Scan it with the iPhone camera, then tap Share → Add to Home Screen.")
+                    Text("Scan it, then Share → Add to Home Screen.")
                         .font(.callout)
                         .fixedSize(horizontal: false, vertical: true)
                     CopyableLink(url: created.statusUrl)
@@ -194,9 +136,9 @@ struct LockSheet: View {
             if let approver = created.approverUrl {
                 Divider()
                 VStack(alignment: .leading, spacing: 9) {
-                    Label("Send this to the person who can approve", systemImage: "person.badge.key.fill")
+                    Label("Send to your approver", systemImage: "person.badge.key.fill")
                         .font(.callout.weight(.medium))
-                    Text("Cable won't show it again — copy it somewhere safe or send it now.")
+                    Text("Shown once.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     CopyableLink(url: approver)
@@ -232,12 +174,12 @@ struct LockedView: View {
                     stateCard(lock.status, record: record)
 
                     VStack(alignment: .leading, spacing: 11) {
-                        ListSectionHeader(title: "Unblock from your iPhone")
+                        ListSectionHeader(title: "Unblock from the iPhone")
                         HStack(alignment: .top, spacing: 18) {
                             QRCodeView(text: record.statusURL)
                                 .frame(width: 118, height: 118)
                             VStack(alignment: .leading, spacing: 9) {
-                                Text("Everything you need is on this page — the countdown, and the password when the wait is over.")
+                                Text("The countdown, then the password.")
                                     .font(.callout)
                                     .fixedSize(horizontal: false, vertical: true)
                                 CopyableLink(url: record.statusURL)
@@ -249,8 +191,7 @@ struct LockedView: View {
                     }
 
                     if let error = lock.errorMessage {
-                        NoticeBanner(tone: .warning, title: "Couldn't reach Cable", detail: error,
-                                     actionTitle: "Try Again") { Task { await lock.refresh() } }
+                        NoticeBanner(tone: .warning, title: "Can't reach Cable", actionTitle: "Retry") { Task { await lock.refresh() } }
                     }
                     if lock.isWorking, let progress = lock.progress {
                         HStack(spacing: 8) {
@@ -276,7 +217,7 @@ struct LockedView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("\(record.deviceName) is locked")
                     .font(.largeTitle.weight(.semibold))
-                Text("This Mac can't change the block. Unblocking takes \(humanDelay(hours: record.delayHours))\(record.approverURL == nil ? "." : ", or a yes from the person you chose.")")
+                Text("Unblocking takes \(humanDelay(hours: record.delayHours)).")
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -299,24 +240,24 @@ struct LockedView: View {
         case "unlocking":
             card(tint: .orange) {
                 VStack(alignment: .leading, spacing: 11) {
-                    Label("Unblocking has started", systemImage: "hourglass")
+                    Label("Unblocking", systemImage: "hourglass")
                         .font(.headline)
                     if let date = status?.unlockDate {
                         CountdownText(target: date)
                     }
-                    Text("You don't have to keep this open — the wait runs on Cable's side.")
+                    Text("You can close this.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
-                    Button("Never Mind, Stay Locked") { Task { await lock.cancelUnlock() } }
+                    Button("Stay Locked") { Task { await lock.cancelUnlock() } }
                         .disabled(lock.isWorking)
                 }
             }
         case "released":
             card(tint: .green) {
                 VStack(alignment: .leading, spacing: 11) {
-                    Label("The wait is over", systemImage: "checkmark.circle.fill")
+                    Label("Ready", systemImage: "checkmark.circle.fill")
                         .font(.headline)
-                    Text("Open the page on your iPhone to get the password, or finish here — this Mac takes management back and clears the block.")
+                    Text("Get the password on the iPhone, or finish here.")
                         .font(.callout)
                         .fixedSize(horizontal: false, vertical: true)
                     HStack(spacing: 9) {
@@ -324,7 +265,7 @@ struct LockedView: View {
                             .buttonStyle(.borderedProminent)
                             .disabled(lock.isWorking)
                         if device == nil {
-                            Text("Plug the iPhone in to also clear the block from here.")
+                            Text("Plug in the iPhone to clear it from here too.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -336,10 +277,10 @@ struct LockedView: View {
                 VStack(alignment: .leading, spacing: 11) {
                     Label("Locked", systemImage: "lock.fill")
                         .font(.headline)
-                    Text("Asking to unblock starts a \(humanDelay(hours: record.delayHours)) wait. Nothing shortens it\(record.approverURL == nil ? "." : " except the person you chose.")")
+                    Text("Nothing shortens the wait\(record.approverURL == nil ? "." : " except your approver.")")
                         .font(.callout)
                         .fixedSize(horizontal: false, vertical: true)
-                    Button("Start the \(humanDelay(hours: record.delayHours)) Wait") { Task { await lock.requestUnlock() } }
+                    Button("Start the Wait") { Task { await lock.requestUnlock() } }
                         .disabled(lock.isWorking)
                 }
             }
@@ -347,7 +288,7 @@ struct LockedView: View {
             card(tint: .secondary) {
                 HStack(spacing: 8) {
                     ProgressView().controlSize(.small)
-                    Text("Checking the lock…").foregroundStyle(.secondary)
+                    Text("Checking…").foregroundStyle(.secondary)
                 }
             }
         }

@@ -38,7 +38,7 @@ struct BlockListView: View {
             Button("Unblock Everything", role: .destructive) { Task { await model.removeRestrictions() } }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Every app and website Cable is blocking comes back right away.")
+            Text("Everything comes back.")
         }
         .confirmationDialog(
             "Remove “\(profileToRemove?.displayName ?? "")”?",
@@ -50,7 +50,7 @@ struct BlockListView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This block wasn't made by Cable. Anything it hides comes back.")
+            Text("Anything it hides comes back.")
         }
     }
 
@@ -84,14 +84,7 @@ struct BlockListView: View {
     @ViewBuilder
     private var topNotice: some View {
         if let error = model.errorMessage {
-            NoticeBanner(tone: .danger, title: "That didn't work", detail: error,
-                         actionTitle: "Show Log") { appModel.showLog = true }
-        } else if model.isActive && !appModel.lock.isLocked && !model.hasPendingChanges {
-            NoticeBanner(
-                tone: .info,
-                title: "Anyone with this Mac can undo this in one click",
-                actionTitle: "Lock…"
-            ) { showLockSheet = true }
+            NoticeBanner(tone: .danger, title: error, actionTitle: "Log") { appModel.showLog = true }
         }
     }
 
@@ -102,7 +95,7 @@ struct BlockListView: View {
         if model.apps.isEmpty && model.isLoading {
             VStack(spacing: 12) {
                 ProgressView()
-                Text("Reading the apps on \(device.displayName)…")
+                Text("Reading apps…")
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -123,8 +116,7 @@ struct BlockListView: View {
                     gridSection(
                         title: "Suggested",
                         count: model.suggestions.count,
-                        apps: model.suggestions,
-                        footer: "The apps people most often block, narrowed to the ones on this iPhone."
+                        apps: model.suggestions
                     ) {
                         HStack(spacing: 6) {
                             Button("Add All") { model.acceptAllSuggestions() }
@@ -163,11 +155,8 @@ struct BlockListView: View {
                 }
                 if !model.otherProfiles.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
-                        ListSectionHeader(title: "Blocks not made by Cable", count: model.otherProfiles.count)
+                        ListSectionHeader(title: "Not from Cable", count: model.otherProfiles.count)
                         ForEach(model.otherProfiles) { profileRow($0) }
-                        Text("Cable didn't create these. Take one over to manage it here instead.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -182,7 +171,6 @@ struct BlockListView: View {
         title: String,
         count: Int,
         apps: [InstalledApp],
-        footer: String? = nil,
         @ViewBuilder accessory: () -> Accessory = { EmptyView() }
     ) -> some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -193,11 +181,6 @@ struct BlockListView: View {
             }
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 12)], alignment: .leading, spacing: 16) {
                 ForEach(apps) { appTile($0) }
-            }
-            if let footer {
-                Text(footer)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -246,7 +229,7 @@ struct BlockListView: View {
 
     private func profileSummary(_ profile: InstalledProfile) -> String {
         guard let r = profile.restrictions else {
-            return "Cable can't read what this blocks"
+            return "Contents unknown"
         }
         let names = r.bundleIDs.map { id in model.apps.first { $0.bundleID == id }?.name ?? id }
         let shown = names.prefix(4).joined(separator: ", ")
@@ -262,7 +245,7 @@ struct BlockListView: View {
                 TextField("instagram.com", text: $model.siteInput)
                     .textFieldStyle(.roundedBorder)
                     .onSubmit { model.addSite() }
-                Button("Add Website") { model.addSite() }
+                Button("Add") { model.addSite() }
                     .disabled(RestrictionsProfile.normalizeSite(model.siteInput) == nil)
             }
             .padding(16)
@@ -271,7 +254,7 @@ struct BlockListView: View {
                 ContentUnavailableView {
                     Label("No websites blocked", systemImage: "globe")
                 } description: {
-                    Text("Add a site and it stops loading in Safari and inside other apps. Blocking a website doesn't block its app — do that under Apps.")
+                    Text("Blocked in Safari and in apps.")
                 }
             } else {
                 List {
@@ -356,7 +339,7 @@ struct BlockListView: View {
         var parts: [String] = []
         if adds > 0 { parts.append("\(adds) to \(model.mode == .block ? "block" : "allow")") }
         if removes > 0 { parts.append("\(removes) to undo") }
-        return parts.joined(separator: " · ") + " — not on the iPhone yet"
+        return parts.joined(separator: " · ") + " — not applied yet"
     }
 
     @ViewBuilder
@@ -364,7 +347,7 @@ struct BlockListView: View {
         if model.isApplying {
             HStack(spacing: 7) {
                 ProgressView().controlSize(.small)
-                Text("Sending to \(device.displayName)…").foregroundStyle(.secondary)
+                Text("Sending…").foregroundStyle(.secondary)
             }
         } else if let status = model.statusMessage, !model.hasPendingChanges {
             Label(status, systemImage: "checkmark.circle.fill")
@@ -376,12 +359,11 @@ struct BlockListView: View {
                 .lineLimit(1)
         } else if model.isActive {
             let n = model.appliedApps.count + model.appliedSites.count
-            Label("\(n) item\(n == 1 ? "" : "s") \(model.appliedMode == .block ? "blocked" : "allowed") on \(device.displayName)",
-                  systemImage: "shield.fill")
+            Label("\(n) blocked", systemImage: "shield.fill")
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
         } else {
-            Text("Pick what to block, then apply it.")
+            Text("Pick what to block.")
                 .foregroundStyle(.secondary)
         }
     }

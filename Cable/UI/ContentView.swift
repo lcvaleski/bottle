@@ -103,18 +103,12 @@ struct WaitingForPhoneView: View {
         ContentUnavailableView {
             Label("Plug in your iPhone", systemImage: "cable.connector")
         } description: {
-            VStack(spacing: 10) {
-                Text("Connect it with a cable, unlock it, and tap **Trust** if it asks.")
-                Text("Wi-Fi isn't enough — Cable needs the cable to change what's on the phone.")
-                    .foregroundStyle(.secondary)
-                if let error {
-                    Text(error)
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                        .textSelection(.enabled)
-                }
+            if let error {
+                Text(error)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .textSelection(.enabled)
             }
-            .multilineTextAlignment(.center)
         }
     }
 }
@@ -122,11 +116,11 @@ struct WaitingForPhoneView: View {
 struct ConfiguratorMissingView: View {
     var body: some View {
         ContentUnavailableView {
-            Label("One free download first", systemImage: "app.badge.checkmark")
+            Label("Cable needs Apple Configurator", systemImage: "app.badge.checkmark")
         } description: {
-            Text("Cable drives Apple's own Apple Configurator to talk to your iPhone. Install it from the Mac App Store — it's free — then come back.")
+            Text("Apple's own app. It's free.")
         } actions: {
-            Link("Get Apple Configurator", destination: URL(string: "macappstore://apps.apple.com/app/id1037126344")!)
+            Link("Get It", destination: URL(string: "macappstore://apps.apple.com/app/id1037126344")!)
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
         }

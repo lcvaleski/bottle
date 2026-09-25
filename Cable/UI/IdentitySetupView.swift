@@ -17,80 +17,71 @@ struct IdentitySetupView: View {
     @State private var showFileImport = false
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 22) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Connect this Mac to \(device.displayName)")
-                        .font(.largeTitle.weight(.semibold))
-                    Text("This iPhone is already set up for management by **\(device.organizationName ?? "an organization")**. Cable needs that organization's key before it can change anything.")
+        VStack(spacing: 24) {
+            VStack(spacing: 7) {
+                Text("Allow Cable to manage \(device.displayName)")
+                    .font(.largeTitle.weight(.semibold))
+                    .multilineTextAlignment(.center)
+                if let org = device.organizationName {
+                    Text("It was set up by \(org).")
                         .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
+            }
 
-                if !candidates.isEmpty {
-                    VStack(alignment: .leading, spacing: 9) {
-                        ListSectionHeader(title: "Found on this Mac")
-                        ForEach(candidates) { item in
-                            candidateRow(item)
-                        }
-                    }
+            if candidates.isEmpty {
+                NoticeBanner(
+                    tone: .warning,
+                    title: "Nothing on this Mac can manage it",
+                    detail: "Open the Mac that set it up, then bring the file over."
+                )
+                .frame(maxWidth: 420)
+            } else {
+                VStack(spacing: 8) {
+                    ForEach(candidates) { candidateRow($0) }
                 }
+                .frame(maxWidth: 420)
+            }
 
-                VStack(alignment: .leading, spacing: 9) {
-                    ListSectionHeader(title: candidates.isEmpty ? "Bring the key over" : "Or bring it from another Mac")
-                    VStack(alignment: .leading, spacing: 11) {
-                        Text("On the Mac that set up this iPhone, open Apple Configurator → Settings → Organizations, pick the organization, and choose Export Supervision Identity. Then open that file here.")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                        HStack(spacing: 9) {
-                            Button("Choose File…") { showFileImport = true }
-                            Text(fileURL?.lastPathComponent ?? "No file chosen")
-                                .font(.callout)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                        }
-                        HStack(spacing: 9) {
-                            SecureField("Password used when exporting", text: $password)
-                                .textFieldStyle(.roundedBorder)
-                                .frame(maxWidth: 260)
-                            Button("Open") { importFile() }
-                                .disabled(fileURL == nil || isWorking)
-                        }
-                    }
-                    .padding(14)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(.quaternary.opacity(0.28), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-                }
+            if isWorking {
+                ProgressView().controlSize(.small)
+            }
+            if let errorMessage {
+                NoticeBanner(tone: .danger, title: errorMessage, actionTitle: "Log") { model.showLog = true }
+                    .frame(maxWidth: 420)
+            }
 
-                if let errorMessage {
-                    NoticeBanner(tone: .danger, title: "Couldn't use that key", detail: errorMessage,
-                                 actionTitle: "Show Log") { model.showLog = true }
-                }
-                if isWorking {
-                    HStack(spacing: 8) {
-                        ProgressView().controlSize(.small)
-                        Text("Setting up…").foregroundStyle(.secondary)
-                    }
-                }
-
-                DisclosureGroup("Why does Cable need this?") {
-                    Text("Apple lets exactly one computer change what a managed iPhone can run: the one that set it up. That permission lives in a key file. Cable keeps it in your Library folder and never sends it anywhere unless you use Lock.")
+            DisclosureGroup("Set up on another Mac?") {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("There: Apple Configurator → Settings → Organizations → Export Supervision Identity.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
-                        .padding(.top, 6)
+                    HStack(spacing: 9) {
+                        Button("Choose File…") { showFileImport = true }
+                        Text(fileURL?.lastPathComponent ?? "")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                    HStack(spacing: 9) {
+                        SecureField("Password", text: $password)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(maxWidth: 200)
+                        Button("Open") { importFile() }
+                            .disabled(fileURL == nil || isWorking)
+                    }
                 }
-                .font(.callout)
-
-                if model.identityStore.identity != nil {
-                    Button("Cancel") { onDone() }
-                }
+                .padding(.top, 8)
             }
-            .padding(28)
-            .frame(maxWidth: 620, alignment: .leading)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .font(.callout)
+            .frame(maxWidth: 420)
+
+            if model.identityStore.identity != nil {
+                Button("Cancel") { onDone() }
+            }
         }
+        .padding(28)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear { candidates = SupervisionIdentityStore.keychainIdentities() }
         .fileImporter(isPresented: $showFileImport, allowedContentTypes: [.pkcs12]) { result in
             if case let .success(url) = result { fileURL = url }
@@ -107,12 +98,14 @@ struct IdentitySetupView: View {
                 .frame(width: 24)
             VStack(alignment: .leading, spacing: 1) {
                 Text(item.organizationName).fontWeight(.medium)
-                Text(matches ? "Matches this iPhone" : "Set up a different device")
-                    .font(.caption)
-                    .foregroundStyle(matches ? .green : .secondary)
+                if !matches {
+                    Text("A different iPhone")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
             Spacer(minLength: 8)
-            Button(matches ? "Use This" : "Use") { useKeychain(item) }
+            Button("Use") { useKeychain(item) }
                 .buttonStyle(matches ? AnyButtonStyle(.borderedProminent) : AnyButtonStyle(.bordered))
                 .disabled(isWorking)
         }

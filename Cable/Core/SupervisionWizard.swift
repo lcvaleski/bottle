@@ -17,13 +17,13 @@ final class SupervisionWizard {
 
         var title: String {
             switch self {
-            case .identity: "Create supervision identity"
-            case .backup: "Back up iPhone"
-            case .erase: "Erase iPhone"
-            case .reconnect: "Wait for iPhone to restart"
-            case .prepare: "Supervise iPhone"
-            case .restore: "Restore backup"
-            case .verify: "Verify supervision"
+            case .identity: "Getting ready"
+            case .backup: "Backing up"
+            case .erase: "Erasing"
+            case .reconnect: "Restarting"
+            case .prepare: "Setting up"
+            case .restore: "Restoring"
+            case .verify: "Checking"
             }
         }
     }
@@ -140,65 +140,65 @@ final class SupervisionWizard {
                 identity = try await identityStore.generate(organizationName: organizationName, log: cfgutil.log)
             }
             cfgutil.identity = identity
-            set(id, .done, "Stored in \(SupervisionIdentityStore.directory.path)")
+            set(id, .done, "")
 
         case .backup:
             if skipBackup {
-                set(id, .skipped, "Skipped — iPhone will be set up as new")
+                set(id, .skipped, "Skipped")
                 return
             }
-            set(id, .running, "Backing up… keep the iPhone unlocked. This can take a while.")
+            set(id, .running, "Keep the iPhone unlocked")
             try await cfgutil.run("backup", ecid: ecid, timeout: 10, progress: true)
-            set(id, .done, "Saved to ~/Library/Application Support/MobileSync/Backup")
+            set(id, .done, "")
 
         case .erase:
             try await cfgutil.run("erase", ecid: ecid, timeout: 10, progress: true)
-            set(id, .done, "Erase started")
+            set(id, .done, "")
 
         case .reconnect:
             try await waitForDevice(id, timeout: 15 * 60, initialDelay: 15)
-            set(id, .done, "iPhone is back at Setup Assistant")
+            set(id, .done, "")
 
         case .prepare:
             guard let identity = cfgutil.identity else {
                 throw WizardError.message("No supervision identity is loaded")
             }
-            set(id, .running, "Activating and supervising…")
+            set(id, .running, "")
             try await cfgutil.run("prepare", [
                 "--supervised",
                 "--name", organizationName.trimmingCharacters(in: .whitespaces),
                 "--host-cert", identity.certificateURL.path,
             ], ecid: ecid, timeout: 30, progress: true)
-            set(id, .done, "Supervised by \(organizationName)")
+            set(id, .done, "")
 
         case .restore:
             if skipBackup {
-                set(id, .skipped, "No backup to restore")
+                set(id, .skipped, "Skipped")
                 return
             }
             try await waitForDevice(id, timeout: 5 * 60, initialDelay: 3)
             var args: [String] = []
             if !backupPassword.isEmpty { args += ["--password", backupPassword] }
             if let udid { args += ["--source", udid] }
-            set(id, .running, "Restoring… the iPhone will restart when it finishes.")
+            set(id, .running, "The iPhone will restart when this finishes")
             try await cfgutil.run("restore-backup", args, ecid: ecid, timeout: 30, progress: true)
-            set(id, .done, "Backup restored")
+            set(id, .done, "")
 
         case .verify:
             try await waitForDevice(id, timeout: 10 * 60, initialDelay: 5)
             let result = try await cfgutil.run("get", ["isSupervised", "organizationName"], ecid: ecid, timeout: 10)
             let props = result.properties(for: ecid)
             guard JSONCoerce.bool(props["isSupervised"]) == true else {
-                throw WizardError.message("The iPhone reports it is not supervised. Check the log for the prepare step.")
+                throw WizardError.message("The iPhone didn't take the setup.")
             }
             let org = JSONCoerce.string(props["organizationName"]) ?? organizationName
-            set(id, .done, "Supervised by \(org). Finish Setup Assistant on the iPhone.")
+            set(id, .done, "")
         }
     }
 
     /// Polls until the device is listed and reports a booted state.
     private func waitForDevice(_ id: StepID, timeout: TimeInterval, initialDelay: TimeInterval) async throws {
-        set(id, .running, "Waiting for the iPhone to reconnect…")
+        set(id, .running, "")
         try await Task.sleep(for: .seconds(initialDelay))
         let deadline = Date().addingTimeInterval(timeout)
 
@@ -213,11 +213,11 @@ final class SupervisionWizard {
                     try await Task.sleep(for: .seconds(3))
                     return
                 }
-                set(id, .running, "iPhone is \(booted.lowercased())… waiting")
+                set(id, .running, "")
             }
             try await Task.sleep(for: .seconds(5))
         }
-        throw WizardError.message("Timed out waiting for the iPhone to reconnect. Unlock it, plug it back in, and retry.")
+        throw WizardError.message("The iPhone didn't come back. Unlock it, plug it in again, and retry.")
     }
 
     private func set(_ id: StepID, _ status: Status, _ detail: String) {
