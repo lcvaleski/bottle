@@ -129,6 +129,9 @@
         .anim .cap1    { animation: cap1 16s linear infinite; }
         .anim .cap2    { animation: cap2 16s linear infinite; }
         .anim .cap3    { animation: cap3 16s linear infinite; }
+        .anim .friends { animation: outside 16s linear infinite; }
+        .anim .jump    { animation: jump 0.62s ease-in-out infinite; }
+        .anim .jump2   { animation-delay: 0.31s; }
 
         @keyframes walk {
             0%, 25%       { transform: translateX(0) }
@@ -155,15 +158,24 @@
             37.5%, 62.5%      { opacity: 1 }
             62.51%, 100%      { opacity: 0 }
         }
+        @keyframes outside {
+            0%, 37.49%        { opacity: 0 }
+            37.5%, 62.5%      { opacity: 1 }
+            62.51%, 100%      { opacity: 0 }
+        }
+        @keyframes jump {
+            0%, 100%          { transform: translateY(0) }
+            50%               { transform: translateY(-9px) }
+        }
         @keyframes cap3 {
             0%, 76.99%        { opacity: 0 }
             77%, 100%         { opacity: 1 }
         }
 
         @media (prefers-reduced-motion: reduce) {
-            .anim .walker, .anim .cable, .anim .appicon,
-            .anim .cap1, .anim .cap2, .anim .cap3 { animation: none; }
-            .anim .cap2, .anim .cap3 { opacity: 0; }
+            .anim .walker, .anim .cable, .anim .appicon, .anim .friends,
+            .anim .jump, .anim .cap1, .anim .cap2, .anim .cap3 { animation: none; }
+            .anim .cap2, .anim .cap3, .anim .friends { opacity: 0; }
         }
         .tiers h2:not(:first-child) { margin-top: 28px; }
         .soon { font-weight: normal; font-size: 12px; color: #666; border: 1px solid rgb(233, 233, 233); padding: 1px 6px; margin-left: 6px; vertical-align: middle; }
@@ -215,7 +227,7 @@
         <section class="tiers">
             <h2>Free</h2>
             <svg class="diagram anim" viewBox="0 0 440 190" role="img"
-                 aria-label="A person plugs an iPhone into a Mac and an app disappears from it. They walk off and spend the day away. They walk back, plug in again, and the app returns.">
+                 aria-label="A person plugs an iPhone into a Mac and an app disappears from it. They walk off and spend the day outside with friends. They walk back, plug in again, and the app returns.">
                 <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
 
                     <!-- The stage never changes: a Mac on the left, outside on the right. -->
@@ -227,18 +239,34 @@
                     <path d="M400 152 v-34 M400 122 l-13 -14 M400 122 l13 -14 M400 134 l-10 -11 M400 134 l10 -11"/>
 
                     <!-- Cable: only there while docked, and it appears and vanishes instantly. -->
-                    <path class="cable" d="M154 128 C 138 142, 116 126, 102 112"/>
+                    <path class="cable" d="M154 138 C 138 150, 116 128, 102 112"/>
                     <rect class="cable" x="98" y="108" width="8" height="8" rx="1"/>
+
+                    <!-- Friends, only there while he's outside. -->
+                    <g class="friends">
+                        <g class="jump">
+                            <circle cx="232" cy="96" r="8"/>
+                            <path d="M232 104 v22"/>
+                            <path d="M232 110 l-13 -11 M232 110 l13 -11"/>
+                            <path d="M232 126 l-9 20 M232 126 l9 20"/>
+                        </g>
+                        <g class="jump jump2">
+                            <circle cx="358" cy="98" r="8"/>
+                            <path d="M358 106 v22"/>
+                            <path d="M358 112 l-13 -11 M358 112 l13 -11"/>
+                            <path d="M358 128 l-9 18 M358 128 l9 18"/>
+                        </g>
+                    </g>
 
                     <!-- The person and their phone move together. -->
                     <g class="walker">
-                        <circle cx="140" cy="74" r="9"/>
-                        <path d="M140 83 v27"/>
-                        <path d="M140 90 l-14 9 M140 90 l16 6"/>
-                        <path d="M140 110 l-10 24 M140 110 l10 24"/>
-                        <rect x="154" y="92" width="20" height="34" rx="3"/>
-                        <path d="M160 121 h8"/>
-                        <rect class="appicon" x="159" y="100" width="10" height="10" rx="2.5"/>
+                        <circle cx="140" cy="84" r="9"/>
+                        <path d="M140 93 v27"/>
+                        <path d="M140 100 l-14 9 M140 100 l16 6"/>
+                        <path d="M140 120 l-10 26 M140 120 l10 26"/>
+                        <rect x="154" y="102" width="20" height="34" rx="3"/>
+                        <path d="M160 131 h8"/>
+                        <rect class="appicon" x="159" y="110" width="10" height="10" rx="2.5"/>
                     </g>
 
                     <text class="cap cap1" x="220" y="178">Plug in. Pick the apps.</text>
